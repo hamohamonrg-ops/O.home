@@ -109,11 +109,9 @@ export async function createSupabaseBackend(
       return error ? { ok: false, error: error.message } : { ok: true };
     },
 
-    // Supabase는 스키마의 트리거가 첫 가입자를 관리자로 만들어 준다 — 추가 작업 없음
     async claimOwner() { return { ok: true }; },
 
     async listMembers() {
-      // avatar_url도 함께 — 이미지 정리가 프로필 사진을 「안 쓰는 파일」로 지우지 않게 (v2.0 사용자 제보)
       const { data, error } = await sb.from('profiles').select('id, nickname, role, avatar_url').order('created_at');
       if (error) throw error;
       return (data ?? []).map(r => {
@@ -140,8 +138,6 @@ export async function createSupabaseBackend(
         const { authorId, visibility, editorIds } = metaOf(item, uid, visFloorOf(coll, item));
         return { id: item.id, data: item, author_id: authorId, visibility, editor_ids: editorIds, sort };
       };
-      // 한 요청에 다 실어 보내면 큰 본문(TRPG 로그 등)이 여럿일 때 요청이 너무 커진다
-      // (v2.0 — Firestore와 같은 문제 예방). 대략 크기를 재서 4MB쯤에서 끊어 보낸다.
       const bySize = (rows: { item: T; sort: number }[]) => {
         const parts: { item: T; sort: number }[][] = [];
         let cur: { item: T; sort: number }[] = [];
@@ -162,8 +158,6 @@ export async function createSupabaseBackend(
         const { error } = await sb.from(coll).upsert(part.map(toRow), { onConflict: 'id' });
         if (error) throw error;
       }
-      // 자리만 바뀐 항목 — sort만 고친다 (본문까지 다시 보내지 않게, diffList 주석 참조).
-      // 값이 제각각이라 한 문장으로 못 묶는다 — 소량씩 나눠 병렬로 보낸다 (행 자체는 아주 작다)
       for (let i = 0; i < moves.length; i += 25) {
         const errs = await Promise.all(moves.slice(i, i + 25).map(m =>
           sb.from(coll).update({ sort: m.sort }).eq('id', m.id).then(r => r.error)));
@@ -176,12 +170,7 @@ export async function createSupabaseBackend(
       }
     },
 
-    /* 공개범위·편집 권한 목록만 다시 계산해 덮어쓰기 (v2.0) — 같은 값이 될 것들끼리 묶어
-       한 번에 UPDATE 한다. data를 다시 쓰지 않으므로 내용·순서가 흔들리지 않는다.
-       editor_ids도 함께 쓴다 (포크 제보 — 업데이트 전에 준 편집 권한이 행에 평평한 목록으로
-       없어서, 최신 규칙을 넣어도 그 회원의 저장이 계속 거부됐다) */
     async refreshVis<T extends ListItem>(coll: string, items: T[], uid: string | null): Promise<number> {
-      // 값이 같은 것끼리 묶는다 — 편집 권한이 있는 항목은 드물어 묶음이 거의 그대로 유지된다
       const byKey = new Map<string, { vis: string; editorIds: string[]; ids: string[] }>();
       items.forEach(it => {
         const { visibility, editorIds } = metaOf(it, uid, visFloorOf(coll, it));
@@ -203,9 +192,12 @@ export async function createSupabaseBackend(
     },
 
     subscribe(coll, onChange) {
-      const ch = sb.channel(`ohome:${coll}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: coll }, () => onChange())
-        .subscribe();
+      const channelName = `ohome:${coll}:${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+      const ch = sb.channel(channelName)
+        .on('postgres_changes', { event: '*', schema: 'public', table: coll }, () => onChange());
+      
+      ch.subscribe();
+
       return () => { void sb.removeChannel(ch); };
     },
 
@@ -232,7 +224,6 @@ export async function createSupabaseBackend(
     async uploadFile(blob, ext) {
       const path = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const { error } = await sb.storage.from(BUCKET)
-        // 경로가 업로드마다 고유 — 기본 1시간 대신 길게 캐시 (firebaseBackend와 동일 정책)
         .upload(path, blob, {
           contentType: blob.type || 'application/octet-stream',
           cacheControl: '31536000',
@@ -259,7 +250,6 @@ export async function createSupabaseBackend(
     },
 
     async deleteFile(ref) {
-      // 저장한 값은 공개 URL — 버킷 안 파일명만 떼어 지운다
       const name = decodeURIComponent(ref.split('?')[0].split('/').pop() ?? '');
       if (!name) return;
       const { error } = await sb.storage.from(BUCKET).remove([name]);
@@ -267,7 +257,6 @@ export async function createSupabaseBackend(
     },
 
     async deleteMember(id) {
-      // profiles 행만 지운다 — auth.users 삭제는 service_role 키가 필요해 공개 홈에서는 불가
       const { error } = await sb.from('profiles').delete().eq('id', id);
       if (error) throw error;
     },
