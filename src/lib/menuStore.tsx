@@ -22,6 +22,8 @@ export interface MenuGroupNode { id: string; label: string; href?: string; items
 export interface MenuViewer { loggedIn: boolean; isAdmin: boolean; id?: string }
 
 export interface MenuSettings {
+  charWrite?: MenuPerm;
+  relWrite?: MenuPerm;
   tree?: MenuGroupNode[];            // 자유 메뉴 트리 (v1.9 — 없으면 v1 설정에서 마이그레이션)
   removedBoards: string[];           // 메뉴에서 뺀 추가 게시판 href (자동 배치 제외)
   // v1 유산 — 트리 마이그레이션 재료로만 사용
