@@ -15,10 +15,12 @@ import { useToast } from '@/components/ui/Toast';
 import { EditableDesc, PageTitle } from '@/components/ui/PageText';
 import { useMainStore } from '@/lib/mainStore';
 import { useCardSort, mergeOrder } from '@/lib/cardSort';
+import { useMenuSettings } from '@/lib/menuStore';
 
 function CharsInner() {
   const router = useRouter();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const [ms] = useMenuSettings(); // 메뉴 설정 가져오기
   const toast = useToast();
   const { editOn } = useMainStore();
   const [charsAll, setCharsAll] = useLocalList<Character>('ohome.chars.v1', CHAR_SEED);
@@ -28,6 +30,10 @@ function CharsInner() {
   // 저장은 이 목록 자리만 교체 — 걸러진 목록을 그대로 넘겨도 다른 목록이 지워지지 않는다
   const setChars = sectionSetter(charsAll, sec.id, setCharsAll);
   const [q, setQ] = useState('');
+
+  // 글쓰기 권한 계산 (SETTINGS의 charWrite가 'member'이면 로그인 유저에게도 권한 부여)
+  const perm = ms.charWrite ?? 'admin';
+  const canWrite = isAdmin || (perm === 'member' && !!user);
 
   /* 편집 권한 문서 자가 치유 (v2.0 포크 제보 — 「권한을 줬는데 그 회원의 저장이 거부된다」).
      업데이트 전에 준 권한은 문서에 규칙이 읽는 평평한 목록(editorIds)이 없어, 최신 규칙을
@@ -60,7 +66,12 @@ function CharsInner() {
         <EditableDesc k="chars-desc" def="운영자의 자캐 목록 · 3:4 두상 썸네일 · 클릭 시 프로필로 이동" />
         <div className="head-actions">
           <SearchBar onSearch={setQ} />
-          {isAdmin && <button className="btn btn-dark" onClick={() => router.push('/chars/new' + secQuery('chars', sec.id))}>＋ ADD CHARACTER</button>}
+          {/* isAdmin 대신 canWrite 조건 적용 */}
+          {canWrite && (
+            <button className="btn btn-dark" onClick={() => router.push('/chars/new' + secQuery('chars', sec.id))}>
+              ＋ ADD CHARACTER
+            </button>
+          )}
         </div>
       </div>
       <div className="g5 chars-grid">
