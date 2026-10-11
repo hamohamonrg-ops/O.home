@@ -98,16 +98,22 @@ export async function createSupabaseBackend(
       return error ? { ok: false, error: error.message } : { ok: true };
     },
 
-    async updateProfile(patch) {
-      const { data } = await sb.auth.getUser();
-      if (!data.user) return { ok: false, error: '로그인이 필요합니다.' };
-      const row: Record<string, unknown> = { id: data.user.id };
-      if (patch.nickname !== undefined) row.nickname = patch.nickname;
-      if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl;
-      if (patch.avatarColor !== undefined) row.avatar_color = patch.avatarColor;
-      const { error } = await sb.from('profiles').upsert(row, { onConflict: 'id' });
-      return error ? { ok: false, error: error.message } : { ok: true };
-    },
+async updateProfile(patch) {
+  const { data } = await sb.auth.getUser();
+  if (!data.user) return { ok: false, error: '로그인이 필요합니다.' };
+
+  const row: Record<string, unknown> = {};
+  if (patch.nickname !== undefined) row.nickname = patch.nickname;
+  if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl;
+  if (patch.avatarColor !== undefined) row.avatar_color = patch.avatarColor;
+
+  // 변경할 항목이 없으면 바로 성공 리턴
+  if (Object.keys(row).length === 0) return { ok: true };
+
+  // upsert 대신 update를 사용해 기존 프로필의 전달된 필드만 변경합니다.
+  const { error } = await sb.from('profiles').update(row).eq('id', data.user.id);
+  return error ? { ok: false, error: error.message } : { ok: true };
+},
 
     async claimOwner() { return { ok: true }; },
 
