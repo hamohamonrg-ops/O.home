@@ -1112,7 +1112,7 @@ function ConfigScopeWarnRow() {
       <h3 style={{ color: 'var(--accent)' }}>방문자에게는 아직 설치 화면이 보입니다</h3>
       <div className="d" style={{ lineHeight: 1.7 }}>
         데이터베이스 연결이 <b>지금 이 브라우저에만</b> 저장돼 있습니다 — 다른 사람이 배포 주소로 들어오면
-        홈이 아니라 「처음 여는 중」 설치 화면이 뜹니다. 아래 파일을 내려받아 <b>저장소의 public 폴더</b>에
+        홈이 아니라 「처음 여는 중」 설치 화면이 둡니다. 아래 파일을 내려받아 <b>저장소의 public 폴더</b>에
         올리고 커밋하면(1~2분 뒤 자동 재배포) 방문자도 같은 홈을 봅니다. 공개용 값이라 노출돼도 안전합니다.
         <br />
         적용됐는지는 <b>내 배포 주소/ohome.config.json</b>을 열어 값이 보이면 성공입니다.
@@ -2008,7 +2008,7 @@ function MenuPane() {
     { value: 'solo', label: '→ 단독 메뉴' },
   ];
 
-const permSel = (label: string, value: MenuPerm, onChange: (v: MenuPerm) => void) => (
+  const permSel = (label: string, value: MenuPerm, onChange: (v: MenuPerm) => void) => (
     <KSelect minWidth={110} value={value} onChange={v => onChange(v as MenuPerm)}
       options={[
         { value: 'guest', label: `${label}: 방문자` },
@@ -2189,7 +2189,7 @@ const permSel = (label: string, value: MenuPerm, onChange: (v: MenuPerm) => void
             <br />
             「비로그인 숨김」 옆 <b>멤버 선택</b>으로 특정 회원에게만 보이게 좁힐 수 있습니다 — 비우면 로그인한 모든 회원
             <br />
-            <b>주소로는 열람 허용</b>을 켜면 메뉴에서는 계속 감춰 두고 <b>주소를 아는 사람만 들어올 수 있는</b> 메뉴가 됩니다 — 링크로 돌릴 게시판에 씁니다
+            <b>주소으로는 열람 허용</b>을 켜면 메뉴에서는 계속 감춰 두고 <b>주소를 아는 사람만 들어올 수 있는</b> 메뉴가 됩니다 — 링크로 돌릴 게시판에 씁니다
           </div>
           {tree.map(g => (
             <div key={g.id} style={{ borderBottom: '1px dashed var(--line)', padding: '9px 0' }}>
@@ -2197,7 +2197,6 @@ const permSel = (label: string, value: MenuPerm, onChange: (v: MenuPerm) => void
                 <b style={{ fontSize: 13 }}>{g.label}</b>
                 {g.href && <small style={{ color: 'var(--faint)', fontSize: 10.5 }}>{g.href}</small>}
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  {/* 단독 메뉴이거나 상위 메뉴에 href가 있는 경우 extraPerm 실행 */}
                   {g.href && extraPerm(g.href)}
                   {openChk(g.vis, g.open, nv => patchGroup(g.id, { open: nv || undefined }))}
                   {memberBtn(g.vis, g.visMembers, ids => patchGroup(g.id, { visMembers: ids }))}
@@ -2209,13 +2208,11 @@ const permSel = (label: string, value: MenuPerm, onChange: (v: MenuPerm) => void
                 </div>
               </div>
               
-              {/* 상위 그룹 하위에 속한 캐릭터/자관 메뉴 렌더링 부분 */}
               {!g.href && g.items.map(it => (
                 <div key={it.href} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '6px 0 0 22px' }}>
                   <span style={{ fontSize: 12.5 }}>{it.label ?? defLabel(it.href)}</span>
                   <small style={{ color: 'var(--faint)', fontSize: 10.5 }}>{it.href}</small>
                   <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    {/* ★ 하위 메뉴 항목에서도 extraPerm(it.href)가 호출되어야 함 */}
                     {extraPerm(it.href)}
                     {openChk(it.vis, it.open, nv => patchGroup(g.id, {
                       items: g.items.map(x => (x.href === it.href ? { ...x, open: nv || undefined } : x)),
