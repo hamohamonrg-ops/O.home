@@ -2008,7 +2008,7 @@ function MenuPane() {
     { value: 'solo', label: '→ 단독 메뉴' },
   ];
 
-  const permSel = (label: string, value: MenuPerm, onChange: (v: MenuPerm) => void) => (
+const permSel = (label: string, value: MenuPerm, onChange: (v: MenuPerm) => void) => (
     <KSelect minWidth={110} value={value} onChange={v => onChange(v as MenuPerm)}
       options={[
         { value: 'guest', label: `${label}: 방문자` },
@@ -2041,9 +2041,8 @@ function MenuPane() {
     }
   };
 
-// ── [수정] 캐릭터(/chars) 및 자관(/rels) 글쓰기/편집 권한 조건 강화 ──
+  // ── [수정] 캐릭터(/chars) 및 자관(/rels) 글쓰기/편집 권한 조건 강화 ──
   const extraPerm = (href: string) => {
-    // /chars, /chars?s=..., /chars/ 등 캐릭터 관련 모든 경로 대응
     if (href === '/chars' || href.startsWith('/chars?') || href.startsWith('/chars/')) {
       const perm = ms.charWrite ?? 'admin';
       return (
@@ -2054,7 +2053,6 @@ function MenuPane() {
           ]} />
       );
     }
-    // /rels, /rels?s=..., /rels/ 등 자관 관련 모든 경로 대응
     if (href === '/rels' || href.startsWith('/rels?') || href.startsWith('/rels/')) {
       const perm = ms.relWrite ?? 'admin';
       return (
