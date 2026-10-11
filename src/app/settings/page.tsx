@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 // 환경설정 (기획서 5장) — 0차: 「디자인」 탭(테마) 실동작.
 // 나머지 카테고리는 해당 기능 마일스톤에서 함께 구현.
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
@@ -68,7 +68,6 @@ const CATEGORIES = [
 /** 색 항목 한 쌍 렌더 헬퍼 */
 function CP({ label, k, def }: { label?: string; k: keyof ThemeVars; def?: string }) {
   const { state, setVar } = useTheme();
-  // def: 값이 없을 때 실제로 적용되는 기본색 (예: 입력 포커스 = 포인트색)
   return (
     <>
       {label && <span className="cp-lb">{label}</span>}
@@ -77,14 +76,6 @@ function CP({ label, k, def }: { label?: string; k: keyof ThemeVars; def?: strin
   );
 }
 
-/**
- * 위젯 스타일 (v2.0 사용자 요청) — 메인·사이드에 얹히는 카드의 배경·타이틀색·본문색·테두리.
- *
- * 색을 안 정하면 `--wg-*`가 카드 색을 그대로 가리키므로 지금까지와 똑같이 보인다. 그래서 값이
- * 비어 있을 때 입력란에는 **지금 실제로 쓰이는 카드 색**을 채워 둔다 — 처음 열었을 때 엉뚱한
- * 회색이 아니라 화면에 보이는 그 색이 나와야 조금만 바꿔 쓰기 쉽다.
- * 테두리는 켤 때만 그린다(끄면 지금처럼 그림자만).
- */
 function WidgetStyleRow() {
   const { state, setVar } = useTheme();
   const v = state.vars;
@@ -107,7 +98,6 @@ function WidgetStyleRow() {
   );
 }
 
-/** 역할 폰트 한 줄 — 폰트 + 굵기 + 크기 배율 (5.1, 폰트별 체감 크기 보정) */
 function FontRoleRow({ role }: { role: FontRole }) {
   const { fonts, roles, setRole, familyOf } = useFonts();
   const cfg = roles[role];
@@ -118,7 +108,6 @@ function FontRoleRow({ role }: { role: FontRole }) {
     <div className="set-row" style={{ flexWrap: 'wrap' }}>
       <div className="l"><b>{ROLE_LABEL[role].label}</b>{ROLE_LABEL[role].desc && <small>{ROLE_LABEL[role].desc}</small>}</div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-        {/* 폰트 이름이 길어도 줄이 넘어가지 않게 상한을 둔다 — 넘치면 … (v2.0 사용자 요청) */}
         <KSelect minWidth={170} value={cfg.id} onChange={v => setRole(role, { id: v })}
           options={[
             ...(role === 'dropdown' ? [{ value: FOLLOW_MENU, label: <span>메뉴 폰트와 동일</span> }] : []),
@@ -143,18 +132,17 @@ function DesignPane() {
     state, dirty: themeDirty, setMode, setPointAccent, setPointTone, setVar,
     resetMode, save, discard, presets, savePreset, applyPreset, removePreset,
   } = useTheme();
-  // 디자인 탭의 색상 외 요소(로고·역할 폰트)도 SAVE 드래프트로 통합 (v1.9 사용자 확정)
   const siteDraft = useSiteDraft();
   const { rolesDirty, saveRoles, discardRoles } = useFonts();
   const dirty = themeDirty || siteDraft.dirty || rolesDirty;
-  // 저장 안 한 채 새로고침·창 닫기를 하면 조용히 사라진다 —
-  // 미리보기가 화면(탭 제목·로고·색)에 바로 적용돼서 저장된 줄 알기 쉬우므로 한 번 물어본다
+
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
+
   const toast = useToast();
   const del = useConfirmDelete();
   const [resetOpen, setResetOpen] = useState(false);
@@ -163,6 +151,7 @@ function DesignPane() {
   const modeBtn = (m: typeof state.mode, label: string) => (
     <button className={state.mode === m ? 'on' : ''} onClick={() => setMode(m)}>{label}</button>
   );
+
   return (
     <div className="set-sec">
       <h3>테마</h3>
@@ -182,12 +171,10 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 저장/취소 — 이리저리 실험 후 저장하지 않을 수 있음 (v1.9) */}
       <div className="set-row">
         <div className="l"><b>저장</b><small>화면에는 바로 보이지만 <b>SAVE를 눌러야 실제로 저장</b>됩니다 — 색·폰트·로고·탭 제목 모두</small></div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {dirty && <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>저장 안 된 변경</span>}
-          {/* 컨트롤 세로 크기 통일 — 35px (btn-dark 기본과 동일) */}
           <button className="btn btn-ghost" style={{ height: 35, padding: '0 14px', fontSize: 11, opacity: dirty ? 1 : 0.45 }}
             disabled={!dirty} onClick={() => { discard(); siteDraft.discard(); discardRoles(); toast('저장된 테마로 되돌렸습니다'); }}>변경 취소</button>
           <button className="btn btn-dark" style={{ padding: '0 18px', fontSize: 11, opacity: dirty ? 1 : 0.45 }}
@@ -195,11 +182,9 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 테마 프리셋 — 이름으로 저장해 두고 드롭다운에서 커스텀으로 적용 (v1.9) */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>테마 저장해두기</b><small>현재 색 구성을 이름으로 보관 — 적용하면 커스텀 모드에 불러옵니다</small></div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {/* 저장된 테마 컨트롤은 왼쪽에 등장 — 테마 이름/KEEP 위치는 고정 (사용자 확정) */}
           {presets.length > 0 && (
             <>
               <KSelect minWidth={140} value={presetSel} onChange={setPresetSel}
@@ -213,7 +198,6 @@ function DesignPane() {
                 }}>DELETE</button>
             </>
           )}
-          {/* 인풋·버튼 세로 크기 통일 (35px) */}
           <KInput placeholder="테마 이름" value={presetName} onChange={e => setPresetName(e.target.value)}
             style={{ width: 120, height: 35, boxSizing: 'border-box' }} />
           <button className="btn btn-ghost" style={{ height: 35, padding: '0 14px', fontSize: 11 }}
@@ -226,7 +210,6 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 선택 리셋 — 모드를 골라 그 모드의 수정값만 초기화 */}
       <ConfirmModal open={resetOpen} wide title="어떤 테마를 초기화할까요?"
         body="선택한 모드의 수정값만 초기 상태로 돌아갑니다. 확정은 [SAVE]를 눌러야 저장됩니다."
         onClose={() => setResetOpen(false)}
@@ -255,7 +238,6 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 배경 — 그라데이션(각도) / 이미지(블러) 선택 (v1.9) */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>배경</b><small>그라데이션(시작→끝·각도) 또는 이미지(업로드·블러)</small></div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -298,7 +280,6 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 카드 색 — 패널·게시판 리스트·필터 등 공통 (v1.9) */}
       <div className="set-row">
         <div className="l"><b>카드</b><small>패널·게시판 리스트·필터 카드의 배경과 글씨색 — 보조 글씨색은 자동 파생</small></div>
         <div className="cp-group">
@@ -307,13 +288,11 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 브라우저 탭 제목 (v1.9 사용자 요청) — 비우면 「로고 텍스트 — 개인홈」 */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>브라우저 탭 제목</b><small>탭·즐겨찾기에 표시되는 이름 — 비우면 「로고 텍스트 — 개인홈」</small></div>
         <DocTitleControl />
       </div>
 
-      {/* 브라우저 탭 아이콘 (v2.0 사용자 요청) — 지정 전에는 배포 기본 아이콘이 뜬다 */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>브라우저 탭 아이콘</b><small>탭·즐겨찾기에 표시되는 작은 그림 — 정사각형 PNG 권장, 비우면 기본 아이콘</small></div>
         <FaviconControl />
@@ -324,12 +303,10 @@ function DesignPane() {
         <CrawlDescControl />
       </div>
 
-      {/* 로고 — 텍스트/서브타이틀/정렬/글씨색 (5.2) */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>로고</b><small>상단바 로고 텍스트·아랫줄 서브타이틀·정렬</small></div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end', flex: 1 }}>
           <LogoControls />
-          {/* 글씨색은 줄 오른쪽 끝으로 (v1.9 사용자 요청) */}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
             <CP label="글씨" k="topBrand" />
           </div>
@@ -357,7 +334,6 @@ function DesignPane() {
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>페이지 타이틀</b><small>각 메뉴 상단 큰 제목과 설명 문구</small></div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {/* 헤더 표시 옵션 (v1.9): 둘 다 / 제목만 / 설명만 / 안 띄움 */}
           <div className="mini-seg">
             {(['both', 'title', 'desc', 'none'] as const).map(m => (
               <button key={m} className={(state.vars.pageHead ?? 'both') === m ? 'on' : ''}
@@ -366,7 +342,6 @@ function DesignPane() {
               </button>
             ))}
           </div>
-          {/* 모바일에서만 헤더를 생략할지 (v1.9 사용자 요청) */}
           <span className="cp-lb">모바일</span>
           <div className="mini-seg">
             <button className={(state.vars.pageHeadM ?? 'same') === 'same' ? 'on' : ''}
@@ -389,7 +364,6 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 캐릭터 탭 리스트 (v1.9 사용자 요청) — 좌측 아이콘 탭 4색 */}
       <div className="set-row">
         <div className="l"><b>캐릭터 탭 리스트</b><small>캐릭터 상세 좌측 아이콘 탭</small></div>
         <div className="cp-grid2">
@@ -400,14 +374,11 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 입력 포커스 (v1.9 사용자 요청) — 인풋·텍스트에리어·드롭다운·에디터 공통 */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>입력 포커스</b><small>인풋·드롭다운을 선택했을 때의 테두리색과 강조 링</small></div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end', flex: 1 }}>
-          {/* 미리보기는 왼쪽, 설정 컨트롤은 오른쪽 정렬 (v1.9 사용자 요청) */}
           <KInput style={{ width: 130, marginRight: 'auto' }} defaultValue="포커스 미리보기" />
           <CP label="색" k="focusColor" def={state.vars.accent} />
-          {/* 한 줄에 들어가도록 짧게 — 자세한 뜻은 툴팁 (v1.9) */}
           <div className="mini-seg">
             <button data-tip="은은하게 번지는 링" className={(state.vars.focusRing ?? 'glow') === 'glow' ? 'on' : ''}
               onClick={() => setVar('focusRing', 'glow')}>번짐</button>
@@ -426,7 +397,6 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 이미지 편집(크롭) 배경 (v1.9 사용자 요청) — 투명 PNG 위치 지정 시 보이는 판 */}
       <div className="set-row">
         <div className="l"><b>이미지 편집 배경</b><small>썸네일·헤더 위치 지정 화면의 판 — 투명 이미지에서 보임</small></div>
         <div className="cp-group">
@@ -434,7 +404,6 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 스티커 메모 보드 (v1.9 사용자 요청) — 라이트 모드에서 배치 판이 안 보이던 문제 */}
       <div className="set-row">
         <div className="l"><b>스티커 메모 보드</b><small>메모장 배치 판과 메인 미니보드 위젯의 배경</small></div>
         <div className="cp-group">
@@ -453,7 +422,6 @@ function DesignPane() {
 
       <div className="set-row">
         <div className="l"><b>검색창</b><small>게시판·리스트 공통 검색 인풋 — 라이트/다크 전환 시 자동 연동</small></div>
-        {/* 4항목은 한 줄에 안 들어가 밀림 — 2×2 그리드 정렬 (열 맞춤) */}
         <div className="cp-grid2">
           <CP label="배경" k="searchBg" />
           <CP label="글씨" k="searchFg" />
@@ -470,7 +438,6 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 위젯 스타일 (v2.0 사용자 요청) — 메인·사이드 카드. 안 정하면 카드 색을 그대로 따라간다 */}
       <WidgetStyleRow />
 
       <div className="set-row">
@@ -482,7 +449,6 @@ function DesignPane() {
         </div>
       </div>
 
-      {/* 사이트 역할 폰트 (5.1) — 폰트 라이브러리(내장+직접 등록)에서 선택 + 굵기·크기 보정 */}
       <FontRoleRow role="title" />
       <FontRoleRow role="pagetitle" />
       <FontRoleRow role="subtitle" />
@@ -496,15 +462,13 @@ function DesignPane() {
         <KStep value={state.vars.radius} min={0} max={30} onChange={v => setVar('radius', v)} />
       </div>
 
-      {/* 그림자 설정 — 블록/드롭다운 나란히 묶음 */}
       <div className="set-row">
         <div className="l"><b>블록 그림자</b><small>패널·카드·배너·모달의 드롭섀도우 세기 — 0%는 그림자 없음</small></div>
-        {/* 색은 왼쪽으로 빼고 세기 컨트롤은 오른쪽 — 아래 「드롭다운 그림자」 행과 열이 맞음 (v1.9 사용자 요청) */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
           <span className="cp-lb" style={{ marginLeft: 'auto' }}>색</span>
           <ColorField value={state.vars.shColor ?? '#000000'} onChange={hex => setVar('shColor', hex)} />
           <div className="mini-seg" style={{ marginLeft: 10 }}>
-            {([['없음', 0], ['약하게', 30], ['보통', 50], ['강하게', 100]] as const).map(([label, v]) => (
+            {(['없음', 0], ['약하게', 30], ['보통', 50], ['강하게', 100] as const).map(([label, v]) => (
               <button key={label} className={state.vars.shadow === v ? 'on' : ''}
                 onClick={() => setVar('shadow', v)}>{label}</button>
             ))}
@@ -517,7 +481,7 @@ function DesignPane() {
         <div className="l"><b>드롭다운 그림자</b><small>하위메뉴·프로필 메뉴·셀렉트 팝업·달력 — 블록 그림자와 별개, 없음도 가능</small></div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div className="mini-seg">
-            {([['없음', 0], ['약하게', 30], ['보통', 50], ['강하게', 100]] as const).map(([label, v]) => (
+            {(['없음', 0], ['약하게', 30], ['보통', 50], ['강하게', 100] as const).map(([label, v]) => (
               <button key={label} className={(state.vars.ddShadow ?? 100) === v ? 'on' : ''}
                 onClick={() => setVar('ddShadow', v)}>{label}</button>
             ))}
@@ -531,8 +495,6 @@ function DesignPane() {
   );
 }
 
-/** 맞춤법 검사 밑줄 (v2.0 사용자 요청) — 페이지 전체의 빨간 물결줄을 끈다.
- *  다른 로고·탭제목 설정과 같은 드래프트/SAVE 흐름을 탄다. */
 function SpellCheckRow() {
   const { site, set } = useSiteDraft();
   const off = !!site.noSpell;
@@ -547,21 +509,16 @@ function SpellCheckRow() {
   );
 }
 
-/** 메인 페이지 탭 (v1.9 확정) — 모바일 표시 토글 + 모바일 세로 나열 순서
-    토글은 모바일에서만 뺀다(사용자 확정) — PC 메인 구성은 편집모드의 [＋ 위젯]·우클릭 삭제로 */
 function MainPagePane() {
   const { state, setMobileOff, setMobileOrder, resetMain } = useMainStore();
   const toast = useToast();
-  const [resetAsk, setResetAsk] = useState(false);   // 기본 구성 확인 (v1.9)
-  // 모바일 순서 목록: 고정 요소(배너·회원정보창)는 포함되지 않음
+  const [resetAsk, setResetAsk] = useState(false);
   const orderable = state.mobileOrder
     .map(id => state.widgets.find(w => w.id === id))
     .filter((w): w is NonNullable<typeof w> => !!w && !w.fixed);
 
   return (
     <div className="set-sec">
-      {/* 제목 + 설명은 다른 탭과 똑같은 흐름(h3 → .d)으로 두고, 기본 구성 버튼만 우상단에 띄움
-          (버튼 높이가 제목줄을 늘려 설명문이 떨어져 보이던 문제 — v1.9 사용자 피드백) */}
       <div style={{ position: 'relative' }}>
         <h3>메인 페이지</h3>
         <button className="btn btn-ghost" style={{ position: 'absolute', right: 0, top: -3, padding: '6px 14px', fontSize: 11 }}
@@ -576,7 +533,6 @@ function MainPagePane() {
         ]} />
       <div className="d">모바일 표시 여부 + 모바일 세로 나열 순서 — ⠿ 드래그로 순서 변경</div>
 
-      {/* 메인 레이아웃은 고정 캔버스 하나 — 반응형 옵션 제거 (v1.9, PC/모바일 두 가지만) */}
       <DragList
         items={orderable}
         keyOf={w => w.id}
@@ -587,7 +543,6 @@ function MainPagePane() {
               <span className="mw-no">{i + 1}</span>
               <span className="drag-h">⠿</span>
               <div>
-                {/* 뱃지는 이름 옆에 — b가 블록이라 사이에 두면 설명문 줄로 내려감 (v1.9 사용자 피드백) */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <b>{widgetLabel(state.widgets, w)}</b>
                   {MULTI_TYPES.includes(w.type) && <span className="pill">중복 추가 가능</span>}
@@ -606,10 +561,8 @@ function MainPagePane() {
   );
 }
 
-/** 위젯 탭 — 메인 위젯들의 내용·설정값을 한곳에서 관리 (메인 페이지의 관리 모달과 같은 데이터) */
 function WidgetsPane() {
   const { state } = useMainStore();
-  // 설정값이 있는 위젯만 — 실데이터 연동 위젯(DIARY·LATEST·UPCOMING)과 메뉴리스트·회원정보창은 설정값 없음
   const editable = state.widgets.filter(w =>
     (['banner', 'memo', 'dday', 'todo', 'freetext', 'deco'] as const).some(t => t === w.type));
 
@@ -633,7 +586,6 @@ function WidgetsPane() {
       {editable.map(w => (
         <div key={w.id} style={{ padding: '16px 0', borderBottom: '1px solid var(--line)' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
-            {/* 중복 추가 가능한 위젯(이미지·자유 텍스트)은 번호로 구분 (v1.9) */}
             <b style={{ fontSize: 13, letterSpacing: '.04em' }}>{widgetLabel(state.widgets, w)}</b>
             {MULTI_TYPES.includes(w.type) && <span className="pill">중복 추가 가능</span>}
             <small style={{ color: 'var(--faint)', fontSize: 10.5 }}>{WIDGET_META[w.type].desc}</small>
@@ -647,16 +599,13 @@ function WidgetsPane() {
   );
 }
 
-/** 게시판 관리 탭 (5.2) — 게시판 생성·삭제·스킨·권한 + 게시판별 말머리 + 뱃지 색 */
 function BoardPane() {
   const {
     st, patchSystem, patchGallery,
     patchGalleryCat, addGalleryCat, removeGalleryCat, setGalleryCats,
   } = useBoardSettings();
   const { boards, setBoards, patchBoard } = useBoards();
-  const [catBoard, setCatBoard] = useState(MAIN_BOARD_ID);   // 말머리 편집 대상 게시판
-  /* 갤러리 말머리도 갤러리마다 따로 (v2.0 사용자 요청) — 어느 갤러리 것을 고칠지 고른다.
-     하나뿐이면 고를 것이 없으니 선택 줄을 아예 두지 않는다 (감상타래와 같은 방식) */
+  const [catBoard, setCatBoard] = useState(MAIN_BOARD_ID);
   const { list: secList } = useSections();
   const galSecs = secList('gallery');
   const [galSecSel, setGalSec] = useState(MAIN_SEC);
@@ -703,7 +652,6 @@ function BoardPane() {
                     onClick={() => patchBoard(b.id, { skin: s })}>{s === 'list' ? '기본형' : '티켓형'}</button>
                 ))}
               </div>
-              {/* 목록 글씨색 (v1.9) — 미지정이면 테마 기본색 */}
               <span className="cp-lb">글씨</span>
               <ColorField value={b.fg ?? '#2c3037'} onChange={hex => patchBoard(b.id, { fg: hex })} />
               {b.fg && (
@@ -790,8 +738,6 @@ function BoardPane() {
         </div>
       ))}
 
-      {/* 갤러리 말머리 (v2.0 사용자 요청) — 예전에는 코드에 박혀 있어 바꿀 수 없었다.
-          여러 개로 만든 갤러리마다 따로 정한다 (v2.0 사용자 요청) */}
       <h3 style={{ marginTop: 20 }}>갤러리 말머리</h3>
       <div className="d">
         그림백업 글쓰기에서 고르는 말머리 — ⠿ 드래그로 순서 · 추가·수정·삭제 자유
@@ -826,7 +772,6 @@ function BoardPane() {
         onClick={() => addGalleryCat(galSec)}>＋ 말머리 추가</button>
 
       <hr style={{ margin: '24px 0', border: 'none', borderTop: '1.5px solid var(--line)' }} />
-      {/* 갤러리·다이어리 등도 여러 개로 (v2.0 사용자 요청) — 목록이 몇 개인지는 여기 한곳에서 */}
       <SectionsBlock />
 
       {del.element}
@@ -834,28 +779,25 @@ function BoardPane() {
   );
 }
 
-/** 자관 질문 탭 (v1.9) — 질문 세트(CP/NCP) 관리. 자관 상세의 QUESTIONS 섹션 추가 시 세트를 골라 넣는다 */
 function RelQPane() {
   const [sets, setSets] = useLocalList<RelQuestionSet>(RELQ_KEY, RELQ_SEED);
   const [selId, setSelId] = useState<string | null>(null);
   const del = useConfirmDelete();
   const relqToast = useToast();
-  const txtRef = useRef<HTMLInputElement>(null);   // txt 일괄 업로드 (줄바꿈 = 질문)
+  const txtRef = useRef<HTMLInputElement>(null);
   const sel = sets.find(s => s.id === selId) ?? sets[0];
   const patchSet = (id: string, p: Partial<RelQuestionSet>) =>
     setSets(sets.map(s => (s.id === id ? { ...s, ...p } : s)));
 
-  // 질문은 txt로 수백 개씩 올리는 경우가 있어 한 화면에 다 깔면 끝없이 길어진다 (v2.0 사용자 요청)
   const PER_Q = 12;
   const [qPage, setQPage] = useState(1);
   const qTotal = sel?.questions.length ?? 0;
   const qPages = Math.max(1, Math.ceil(qTotal / PER_Q));
-  // 세트를 바꾸거나 질문이 줄어 페이지가 사라지면 마지막 페이지로 당긴다
   const qCur = Math.min(qPage, qPages);
   useEffect(() => { setQPage(1); }, [sel?.id]);
   const qStart = (qCur - 1) * PER_Q;
-  // 화면에 보이는 건 이 페이지뿐이라, 수정·삭제·정렬은 전체 배열 기준 위치로 되돌려 계산해야 한다
   const qShown = (sel?.questions ?? []).slice(qStart, qStart + PER_Q);
+
   return (
     <div className="set-sec">
       <h3>자관 질문</h3>
@@ -865,7 +807,6 @@ function RelQPane() {
       <div className="d">이름은 자유 수정 · CP/NCP 구분 · ⠿ 드래그로 순서</div>
       <DragList items={sets} keyOf={s => s.id} onReorder={setSets}
         render={s => (
-          /* 컴팩트 행 (v1.9 — 위아래 여백 최소) */
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%', padding: '3px 0' }}>
             <span className="drag-h" style={{ fontSize: 11 }}>⠿</span>
             <KInput value={s.name} onChange={e => patchSet(s.id, { name: e.target.value })}
@@ -901,7 +842,6 @@ function RelQPane() {
       )}
       {sel && (
         <>
-          {/* 정렬은 이 페이지 안에서만 — 되돌려 담을 때 앞뒤 페이지는 그대로 둔다 */}
           <DragList items={qShown.map((q, i) => ({ q, key: `${sel.id}-${qStart + i}` }))} keyOf={x => x.key}
             onReorder={list => patchSet(sel.id, {
               questions: [
@@ -911,9 +851,8 @@ function RelQPane() {
               ],
             })}
             render={({ q }, i) => {
-              const gi = qStart + i;   // 전체 배열에서의 실제 위치
+              const gi = qStart + i;
               return (
-              /* 컴팩트 행 — 질문이 100개 단위라 갭 최소화 (v1.9) */
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%', padding: '2px 0' }}>
                 <span className="drag-h" style={{ fontSize: 11 }}>⠿</span>
                 <small style={{ color: 'var(--faint)', fontSize: 10, minWidth: 26, textAlign: 'right' }}>{gi + 1}</small>
@@ -922,7 +861,6 @@ function RelQPane() {
                   style={{ flex: 1, minWidth: 0, fontSize: 12, padding: '5px 10px' }} />
                 <span className="fx" style={{ fontSize: 10, padding: '2px 4px' }}
                   onClick={() => {
-                    // 내용이 있으면 경고 모달, 방금 추가한 빈 줄은 바로 삭제
                     const remove = () => patchSet(sel.id, { questions: sel.questions.filter((_, j) => j !== gi) });
                     if (q.trim()) del.ask(`질문을 삭제하시겠습니까?`, remove, `"${q.slice(0, 40)}${q.length > 40 ? '…' : ''}"`);
                     else remove();
@@ -930,8 +868,6 @@ function RelQPane() {
               </div>
               );
             }} />
-          {/* 개수는 완전히 오른쪽 끝으로, 페이저는 가운데 그대로 (v2.0 사용자 요청) —
-              한 줄에 나란히 두면 개수만큼 페이저가 왼쪽으로 밀려 가운데가 어긋난다 */}
           {qTotal > PER_Q && (
             <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center' }}>
               <span />
@@ -940,7 +876,6 @@ function RelQPane() {
             </div>
           )}
           <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            {/* txt 일괄 업로드 — 엔터 기준 한 줄 = 질문 하나 (v1.9, 100개 단위 대비) */}
             <input ref={txtRef} type="file" accept=".txt,text/plain" style={{ display: 'none' }}
               onChange={async e => {
                 const f = e.target.files?.[0]; e.target.value = '';
@@ -955,7 +890,6 @@ function RelQPane() {
             <button className="btn btn-ghost" style={{ padding: '5px 12px', fontSize: 11 }}
               onClick={() => {
                 patchSet(sel.id, { questions: [...sel.questions, ''] });
-                // 새 빈 줄은 맨 끝에 붙으므로 그 줄이 있는 페이지로 옮겨 준다 (안 그러면 눌러도 안 보인다)
                 setQPage(Math.ceil((qTotal + 1) / PER_Q));
               }}>＋ ADD</button>
           </div>
@@ -966,22 +900,19 @@ function RelQPane() {
   );
 }
 
-/** 회원/보안 탭 (5.2, v1.9 mock 범위) — 가입코드 변경 + 회원 목록(가입 계정 삭제).
- *  그룹별 권한 매트릭스·가입 승인제·비밀번호 정책은 Supabase 연동 시 확장 */
 function MemberPane() {
   const toast = useToast();
   const del = useConfirmDelete();
-  const router = useRouter();   // 회원 이름 클릭 → 회원 정보 페이지 (v1.9)
+  const router = useRouter();
   const [code, setCode] = useState('');
   const [codeLoaded, setCodeLoaded] = useState(false);
-  const [regVer, setRegVer] = useState(0);   // 가입 계정 삭제 후 목록 갱신용
-  const [removedIds, setRemovedIds] = useState<string[]>([]);   // 서버 모드에서 방금 지운 회원
+  const [regVer, setRegVer] = useState(0);
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
   useEffect(() => { setCode(inviteCode()); setCodeLoaded(true); }, []);
   void regVer;
 
   const members = useMembers();
   const serverOn2 = isServerMode();
-  // 계정 삭제는 서비스 콘솔에서만 가능 — 바로 열 수 있게 이 홈의 프로젝트 주소를 만들어 둔다
   const authConsoleUrl = (() => {
     const c = serverConfig();
     if (c?.kind === 'firebase') return `https://console.firebase.google.com/project/${c.projectId}/authentication/users`;
@@ -996,15 +927,14 @@ function MemberPane() {
     try { return JSON.parse(localStorage.getItem('ohome.mockreg.v1') ?? '{}') as Record<string, unknown>; } catch { return {}; }
   })();
 
-  // 회원 목록 — 검색 · 10명 페이지네이션 · 태그 그룹화 (v1.9)
   const PER_MEMBERS = 10;
   const [mq, setMq] = useState('');
   const [mPage, setMPage] = useState(1);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [mTags, setMTags] = useState<Record<string, string[]>>({});
-  const [tagFor, setTagFor] = useState<string | null>(null);   // 태그 입력 중인 회원
+  const [tagFor, setTagFor] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
-  // 회원 태그는 관리자가 정하고 모두가 보는 값 — 서버 모드에서는 DB에 저장 (v2.0)
+
   useEffect(() => { setMTags(getSetting<Record<string, string[]>>('ohome.membertags.v1', {})); }, []);
   const saveTags = (userId: string, tags: string[]) => {
     setMTags(prev => {
@@ -1017,14 +947,13 @@ function MemberPane() {
   const allTags = [...new Set(Object.values(mTags).flat())];
   const isAdminOf = (m: { id: string; role?: string }) => m.role === 'admin' || m.id === 'admin';
   const filteredMembers = members.filter(m => {
-    if (removedIds.includes(m.id)) return false;   // 방금 지운 회원 (목록은 한 번만 받아 온다)
+    if (removedIds.includes(m.id)) return false;
     const k = mq.trim().toLowerCase();
     const tags = mTags[m.id] ?? [];
     if (filterTag && !tags.includes(filterTag)) return false;
     return !k || m.nickname.toLowerCase().includes(k) || m.id.toLowerCase().includes(k)
       || tags.some(t => t.toLowerCase().includes(k));
   })
-    // 관리자를 맨 위로 (사용자 요청) — 그 다음은 이름순
     .sort((a, b) => (isAdminOf(a) ? 0 : 1) - (isAdminOf(b) ? 0 : 1) || a.nickname.localeCompare(b.nickname));
   const pageMembers = filteredMembers.slice((mPage - 1) * PER_MEMBERS, mPage * PER_MEMBERS);
 
@@ -1033,8 +962,6 @@ function MemberPane() {
       <h3>회원/보안</h3>
       <div className="d">가입코드와 회원 목록 관리</div>
 
-      {/* 다른 탭 행들과 같은 .set-row — 라벨은 왼쪽, 입력·버튼은 같은 줄 오른쪽 (v2.0 사용자 지적:
-          예전엔 라벨·설명·컨트롤이 각자 줄을 차지해 다른 탭과 통일감이 없고 줄바꿈도 보기 안 좋았다) */}
       <div className="set-row" style={{ marginTop: 8, flexWrap: 'wrap' }}>
         <div className="l"><b>가입코드</b><small>회원가입 시 입력해야 하는 초대코드 — 아는 사람에게만 공유</small></div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -1070,14 +997,11 @@ function MemberPane() {
         const myTags = mTags[m.id] ?? [];
         return (
           <div key={m.id} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
-            {/* 이름 클릭 → 회원 정보 페이지 (v1.9) */}
             <b style={{ fontSize: 12.5, cursor: 'var(--cur-pointer,pointer)' }} data-tip="회원 정보 보기"
               onClick={() => router.push(`/members/${m.id}`)}>{m.nickname}</b>
-            {/* Firebase 계정 id(uid)는 28자라 줄에서 자리를 다 먹는다 — 앞 7자만, 전체는 툴팁으로 */}
             <small style={{ color: 'var(--faint)', fontSize: 10.5 }} data-tip={m.id.length > 7 ? m.id : undefined}>
               {m.id.length > 7 ? `${m.id.slice(0, 7)}…` : m.id}
             </small>
-            {/* 태그 — ✕로 제거, ＋로 추가 (그룹화) */}
             {myTags.map(t => (
               <span key={t} className="pill" style={{ cursor: 'var(--cur-pointer,pointer)' }} data-tip="태그 제거"
                 onClick={() => del.ask(`태그 「${t}」를 제거하시겠습니까?`,
@@ -1104,10 +1028,8 @@ function MemberPane() {
             )}
             <span className="pill" style={{ marginLeft: 'auto' }}>{isAdminOf(m) ? '관리자' : '회원'}</span>
             {!isBase && !isAdminOf(m) && (
-              // 회원 뱃지(.pill)와 같은 규격 — padding·글씨·radius 동일 (v1.9)
               <button className="btn btn-ghost" style={{ padding: '4px 11px', fontSize: 10.5, borderRadius: 20, lineHeight: 'normal', letterSpacing: '.04em' }}
                 onClick={() => {
-                  // 서버 모드는 계정 삭제가 콘솔 소관이라 안내를 거치는 모달로 (사용자 확정)
                   if (serverOn2) { setDelMember({ id: m.id, nickname: m.nickname }); return; }
                   del.ask(`회원 「${m.nickname}」 계정을 삭제하시겠습니까?`, () => {
                     const reg = { ...registry };
@@ -1129,7 +1051,6 @@ function MemberPane() {
           <Pager page={mPage} total={Math.ceil(filteredMembers.length / PER_MEMBERS)} onChange={setMPage} />
         </div>
       )}
-      {/* 회원 내보내기 — 계정 삭제는 콘솔에서만 되므로 두 단계를 한 흐름으로 안내 (v2.0 사용자 확정) */}
       <ConfirmModal open={delMember !== null} title={`회원 「${delMember?.nickname ?? ''}」 내보내기`}
         wide
         body={
@@ -1167,22 +1088,13 @@ function MemberPane() {
           { label: 'CANCEL', kind: 'ghost' as const, onClick: () => setDelMember(null) },
         ]} />
       {del.element}
-      {/* 포크는 GitHub이 자동으로 동기화해 주지 않는다 — 원본 저장소에 업데이트가 올라와도
-          내 포크·배포에는 반영 안 된 채로 남는다(오늘 만든 기능이 안 보이는 흔한 원인, v2.0 사용자 요청).
-          자격 증명은 전혀 다루지 않고, 저장해 둔 내 포크 주소로 이동만 시켜 준다 — 거기서
-          [Sync fork] 버튼 한 번이면 끝 */}
       {serverOn2 && <ConfigScopeWarnRow />}
       {serverOn2 && <ForkUpdateRow />}
-      {/* 설치를 이미 마친 뒤에도 보안 규칙이 바뀔 때(버전 업데이트 등) 다시 붙여넣을 수 있게 —
-          예전엔 최초 설치 화면에만 있어서 재설치 없이는 갱신된 규칙을 볼 방법이 없었다 (v2.0) */}
       {serverOn2 && <SecurityRulesRow />}
     </div>
   );
 }
 
-/** 연결이 이 브라우저에만 저장된 상태 경고 (v2.0 포크 제보 — 「내 브라우저에선 홈이 뜨는데
- *  배포 링크로 들어온 사람에게는 설치 화면이 뜬다」). 설치 마지막 단계(방문자에게도 보이게 하기)를
- *  건너뛰면 다시 알려 주는 곳이 없어 일주일씩 헤매게 된다 — 관리자가 설정에 들어오면 바로 보이게 */
 function ConfigScopeWarnRow() {
   const src = serverConfigSource();
   const cfg = serverConfig();
@@ -1215,9 +1127,6 @@ function ConfigScopeWarnRow() {
   );
 }
 
-/** 포크 업데이트 바로가기 (v2.0 사용자 요청) — 토큰이나 GitHub 로그인 연동 없이, 저장해 둔 내 포크
- *  주소로 한 번에 이동시켜 준다. 자격 증명을 전혀 다루지 않아 가장 안전하고 구현도 간단하다 —
- *  실제 업데이트(Sync fork)는 그 페이지에서 사용자가 직접 누른다 */
 function ForkUpdateRow() {
   const toast = useToast();
   const [url, setUrl] = useState('');
@@ -1245,8 +1154,6 @@ function ForkUpdateRow() {
   );
 }
 
-/** 보안 규칙 다시 보기 (v2.0) — 최초 설치 이후에도, 앱 업데이트로 규칙이 바뀌면 다시 붙여넣어야 한다.
- *  설치 화면과 같은 내용을 여기서도 복사할 수 있게 */
 function SecurityRulesRow() {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState('');
@@ -1281,8 +1188,6 @@ function SecurityRulesRow() {
           <button className="btn btn-ghost" onClick={() => setOpen(o => !o)}>{open ? '내용 접기' : '내용 보기'}</button>
         </div>
       ) : (
-        /* Supabase도 여기서 바로 복사 (v2.0 포크 제보) — 예전에는 「schema.sql을 실행하라」는
-           안내 한 줄뿐이라, 규칙을 다시 적용하러 온 사람이 빈 화면을 만났다 */
         <div className="setup-row">
           <button className="btn btn-dark" onClick={() => copy(SCHEMA_SQL, 'sql')}>
             {copied === 'sql' ? '복사됨 ✓' : '설치 SQL 복사'}
@@ -1302,7 +1207,6 @@ function SecurityRulesRow() {
   );
 }
 
-/** 무드 리스트 탭 (5.2 — 다이어리 무드: 이름/아이콘/색 추가·수정·삭제·순서) */
 function MoodPane() {
   const [moods, setMoods] = useLocalList<Mood>('ohome.moods.v1', MOOD_SEED);
   const [diaries] = useLocalList<DiaryPost>('ohome.diary.v1', DIARY_SEED);
@@ -1321,13 +1225,11 @@ function MoodPane() {
               <span className="drag-h">⠿</span>
               <span style={{
                 width: 30, height: 30, borderRadius: '50%',
-                // 줄높이 1 — 상자가 아니라 글자를 가운데로 (v2.0 사용자 발견)
                 display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
                 background: moodTint(m.color), color: m.color, fontSize: 14,
               }}>{m.icon}</span>
             </div>
             <div className="cp-group" style={{ justifyContent: 'flex-end' }}>
-              {/* 아이콘 — 클릭하면 특수문자 프리셋, 직접 입력도 가능 (v1.9) */}
               <SymbolInput value={m.icon} onChange={v => patchMood(m.id, { icon: v })}
                 style={{ width: 46, textAlign: 'center' }} />
               <KInput value={m.name} onChange={e => patchMood(m.id, { name: e.target.value })}
@@ -1353,20 +1255,15 @@ function MoodPane() {
   );
 }
 
-/** 로고 컨트롤 (5.2) — 디자인 탭 로고 행에 삽입 */
-/** 브라우저 탭 제목 (v1.9 사용자 요청) — 다른 로고 설정과 같은 드래프트/SAVE 흐름 */
 function DocTitleControl() {
   const { site, set } = useSiteDraft();
   return (
-    // 값이 드래프트 저장소를 거쳐 되돌아오므로 한글 조합이 깨지지 않는 인풋을 쓴다
     <LiveInput value={site.docTitle ?? ''} onValue={v => set({ docTitle: v })}
       placeholder={`${site.title} — 개인홈`}
       style={{ width: 260, height: 35, boxSizing: 'border-box' }} />
   );
 }
 
-/** 크롤링 설명 문구 (v2.0 사용자 요청) — 카톡·디스코드 등 링크 공유 시 제목 아래 뜨는 설명줄.
- *  탭 제목과 같은 자리(디자인 탭)에 바로 이어서 둔다 */
 function CrawlDescControl() {
   const { site, set } = useSiteDraft();
   return (
@@ -1376,8 +1273,6 @@ function CrawlDescControl() {
   );
 }
 
-/** 브라우저 탭 아이콘 (v2.0 사용자 요청) — 지정 전에는 기본 아이콘(배포 기본값)이 뜬다.
- *  탭 제목 바로 아래에 같은 드래프트/SAVE 흐름으로 둔다. */
 function FaviconControl() {
   const { site, set } = useSiteDraft();
   const toast = useToast();
@@ -1388,7 +1283,6 @@ function FaviconControl() {
         width: 35, height: 35, borderRadius: 'var(--radius-s)', border: '1px solid var(--line)',
         background: 'var(--panel)', display: 'grid', placeItems: 'center', overflow: 'hidden', flexShrink: 0,
       }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         {url ? <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           : <span style={{ fontSize: 10, color: 'var(--faint)' }}>기본</span>}
       </span>
@@ -1398,7 +1292,6 @@ function FaviconControl() {
           const f = e.target.files?.[0];
           e.target.value = '';
           if (!f) return;
-          // 올리기가 막히면 아무 말 없이 끝나지 않게 (v2.0 — 프로필 사진에서 겪은 것과 같은 이유)
           try { set({ favicon: await putBlob(f) }); } catch (err) {
             toast(`아이콘을 저장소에 올리지 못했습니다 — ${err instanceof Error ? err.message : String(err)}`);
           }
@@ -1416,11 +1309,9 @@ function FaviconControl() {
 }
 
 function LogoControls() {
-  // 드래프트로만 반영 (v1.9) — 미리보기 즉시, 저장은 디자인 탭 SAVE에서
   const { site, set } = useSiteDraft();
   return (
     <>
-      {/* 로고 문구도 드래프트를 거쳐 되돌아오므로 한글 조합에 안전한 인풋으로 */}
       <LiveInput value={site.title} onValue={v => set({ title: v })}
         style={{ width: 130, height: 35, boxSizing: 'border-box' }} />
       <LiveInput value={site.subtitle} onValue={v => set({ subtitle: v })}
@@ -1436,9 +1327,6 @@ function LogoControls() {
   );
 }
 
-/** 커서 이미지 규격 맞추기 (v1.9 사용자 발견) — 브라우저는 128px를 넘는 이미지를 커서로 쓰지 못하고
- *  그냥 무시해 버려서, 커스텀 커서가 곳곳에서 시스템 커서로 되돌아가 "깨져 보이는" 원인이 된다.
- *  .cur/.ani는 자체 포맷이라 그대로 두고, 일반 이미지만 128px 이내로 줄인다. */
 async function fitCursorImage(f: File): Promise<{ blob: Blob; resized: boolean }> {
   if (/\.(cur|ani)$/i.test(f.name)) return { blob: f, resized: false };
   const url = URL.createObjectURL(f);
@@ -1463,13 +1351,12 @@ async function fitCursorImage(f: File): Promise<{ blob: Blob; resized: boolean }
   }
 }
 
-/** 마우스 커서 탭 (5.1 v1.1) — 상태별 이미지 + 핫스팟 + 전체 on/off */
 function CursorRow({ state }: { state: CursorState }) {
   const [st, patch] = useCursorSettings();
   const toast = useToast();
   const entry = st.states[state];
-  // .ani는 <img>로 표시되지 않아 첫 프레임(.cur)을 뽑아 미리보기 (v1.9)
   const [url, setUrl] = useState<string | null>(null);
+
   useEffect(() => {
     if (!entry?.imgId) { setUrl(null); return; }
     let cancelled = false;
@@ -1483,9 +1370,11 @@ function CursorRow({ state }: { state: CursorState }) {
     });
     return () => { cancelled = true; if (obj) URL.revokeObjectURL(obj); };
   }, [entry?.imgId]);
+
   const inputId = `curFile-${state}`;
   const setEntry = (p: Partial<{ imgId: string; hx: number; hy: number }>) =>
     patch({ states: { ...st.states, [state]: { imgId: entry?.imgId ?? '', hx: 0, hy: 0, ...entry, ...p } } });
+
   return (
     <div className="set-row" style={{ flexWrap: 'wrap' }}>
       <div className="l" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -1493,7 +1382,6 @@ function CursorRow({ state }: { state: CursorState }) {
           width: 36, height: 36, borderRadius: 9, border: '1.5px dashed var(--line)',
           display: 'grid', placeItems: 'center', overflow: 'hidden', flexShrink: 0,
         }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           {url ? <img src={url} alt="" style={{ maxWidth: 32, maxHeight: 32 }} /> : <span style={{ color: 'var(--faint)', fontSize: 14 }}>✛</span>}
         </span>
         <div><b>{CURSOR_STATE_LABEL[state].label}</b><small>{CURSOR_STATE_LABEL[state].desc}</small></div>
@@ -1547,23 +1435,19 @@ function CursorPane() {
   );
 }
 
-/** 데이터 백업 탭 (5.2) — 백업(데이터만/회원까지) · 복원 · 선택 초기화 (v1.9 사용자 확정) */
 function DataPane() {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [resetOpen, setResetOpen] = useState(false);   // 초기화 항목 선택 모달 (v1.9)
-  const [resetAsk, setResetAsk] = useState(false);     // 최종 확인
-  const [picked, setPicked] = useState<string[]>([]);  // 선택한 초기화 그룹
-  const [pushing, setPushing] = useState(false);       // 설정 서버 업로드 중 (v2.0)
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetAsk, setResetAsk] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [pushing, setPushing] = useState(false);
   const serverOn = isServerMode();
-  // 서버에 아직 없는 로컬 설정 — 로컬로 먼저 꾸민 뒤 서버를 붙인 경우에만 생긴다.
-  // 보통의 설치(연결 먼저)에서는 설정이 바뀔 때마다 서버로 나가므로 이 줄 자체가 뜨지 않는다.
   const [unsynced, setUnsynced] = useState<string[]>([]);
+
   useEffect(() => { setUnsynced(unsyncedSettingKeys()); }, []);
 
-  // 사용하지 않는 이미지 정리 (v2.0) — 글을 지워도 저장소에는 파일이 남는다.
-  // 같은 이미지를 다른 글이 쓰고 있을 수 있어 자동 삭제는 위험하므로, 훑어서 보여 주고 관리자가 지운다.
   const [orphans, setOrphans] = useState<{ ref: string; size: number }[] | null>(null);
   const [scanning, setScanning] = useState(false);
   const [cleanAsk, setCleanAsk] = useState(false);
@@ -1578,7 +1462,6 @@ function DataPane() {
       setOrphans(rows);
       toast(rows.length ? `쓰지 않는 이미지 ${rows.length}개를 찾았습니다` : '정리할 이미지가 없습니다');
     } catch (e) {
-      // 멈춘 이유를 그대로 보여 준다 (v2.0) — 「권한 문제」로 뭉뚱그리면 진짜 원인을 놓친다
       toast(e instanceof Error && e.message
         ? e.message
         : '이미지 목록을 읽지 못했습니다 — 저장소 권한(규칙)을 확인해 주세요');
@@ -1592,17 +1475,13 @@ function DataPane() {
     setScanning(true);
     let n = 0;
     for (const f of orphans) {
-      try { await be.deleteFile(f.ref); n += 1; } catch { /* 개별 실패는 건너뜀 */ }
+      try { await be.deleteFile(f.ref); n += 1; } catch {}
     }
     setOrphans(null);
     setScanning(false);
     toast(`이미지 ${n}개를 지웠습니다`);
   };
 
-  /* 어디에도 안 걸린 상대 캐릭터 정리 (v2.0 사용자 요청).
-     자관을 지워도 그 자관에서 만든 상대 캐릭터는 남는다. **일부러 그렇게 둔다** — 실수로 자관을
-     지웠을 때 캐릭터까지 사라지면 되돌릴 방법이 없기 때문(사용자 판단). 대신 정말 아무 자관에도
-     안 걸린 것만 골라 여기서 지운다. 내 캐릭터(own)는 자관과 무관하게 존재하므로 건드리지 않는다. */
   const [chars, setChars] = useLocalList<Character>('ohome.chars.v1', CHAR_SEED);
   const [rels] = useLocalList<Relation>('ohome.rels.v1', REL_SEED);
   const [charAsk, setCharAsk] = useState(false);
@@ -1618,11 +1497,9 @@ function DataPane() {
     toast(`상대 캐릭터 ${gone.size}명을 지웠습니다`);
   };
 
-  // 이 브라우저에 저장돼 있던 사이트 설정을 서버로 올린다 (연결 직후 1회면 충분)
   const doPush = async () => {
     setPushing(true);
     try {
-      // 콘텐츠 키(글 목록 등)가 설정 테이블로 들어가지 않게 설정 키 목록만 올린다
       const n = await pushLocalSettings(SETTING_KEYS);
       toast(n > 0 ? `설정 ${n}건을 서버에 올렸습니다 — 방문자에게도 같은 모습으로 보입니다` : '올릴 설정이 없습니다');
       setUnsynced(unsyncedSettingKeys());
@@ -1633,7 +1510,6 @@ function DataPane() {
   };
   const toggle = (k: string, v: boolean) => setPicked(p => (v ? [...new Set([...p, k])] : p.filter(x => x !== k)));
 
-  /* ---------- 데이터베이스 이전 (v2.0) — 다른 프로젝트/다른 서비스로 통째 옮기기 ---------- */
   const [migOpen, setMigOpen] = useState(false);
   const [migKind, setMigKind] = useState<BackendKind>('supabase');
   const [migSb, setMigSb] = useState({ url: '', anonKey: '' });
@@ -1732,7 +1608,6 @@ function DataPane() {
       <h3>데이터 백업</h3>
       <div className="d">글·캐릭터·자관·역극 등 모든 데이터(JSON)와 이미지 전부를 zip 하나로 — 다른 브라우저/PC 이전용</div>
 
-      {/* 로컬로 먼저 꾸민 뒤 서버를 붙인 경우에만 — 서버에 없는 설정이 남아 있을 때만 나타난다 (v2.0) */}
       {serverOn && unsynced.length > 0 && (
         <div className="set-row" style={{ flexWrap: 'wrap' }}>
           <div className="l"><b>서버에 올리지 않은 설정 {unsynced.length}건</b><small>서버를 붙이기 전에 이 브라우저에서 꾸민 설정입니다 — 올려야 방문자에게도 같은 모습으로 보입니다</small></div>
@@ -1740,7 +1615,6 @@ function DataPane() {
             disabled={pushing} onClick={doPush}>{pushing ? '올리는 중…' : '↑ 설정 올리기'}</button>
         </div>
       )}
-      {/* 쓰지 않는 이미지 정리 (v2.0) — 글을 지워도 저장소 파일은 남는다 */}
       {serverOn && (
         <div className="set-row" style={{ flexWrap: 'wrap' }}>
           <div className="l"><b>쓰지 않는 이미지 정리</b>
@@ -1760,8 +1634,6 @@ function DataPane() {
           </div>
         </div>
       )}
-      {/* 어디에도 안 걸린 상대 캐릭터 정리 (v2.0 사용자 요청) — 자관을 지워도 캐릭터는 일부러 남긴다.
-          실수로 지웠을 때 되돌릴 수 있게. 정말 안 쓰는 것만 여기서 골라 지운다 */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>등록되지 않은 상대 캐릭터 정리</b>
           <small>자관을 지워도 상대 캐릭터는 남습니다(실수로 지웠을 때를 위해) — 어느 자관에도 없는 캐릭터만 골라 지웁니다</small></div>
@@ -1776,7 +1648,6 @@ function DataPane() {
         </div>
       </div>
 
-      {/* 백업 두 갈래 (v1.9 사용자 확정) — 회원 계정 포함 여부 선택 */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>백업 내보내기</b><small>글·캐릭터·설정 + 이미지 → zip · 회원 계정(가입자·가입코드) 포함 여부 선택</small></div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1786,8 +1657,6 @@ function DataPane() {
             disabled={busy} onClick={() => doExport(true)}>↓ 회원까지</button>
         </div>
       </div>
-      {/* Firebase Storage는 다른 주소에서 파일을 읽는 것을 기본적으로 막는다 —
-          홈에서 보는 데는 지장이 없지만 백업·이전은 파일을 직접 받아와야 해서 한 번 열어 줘야 한다 */}
       {serverOn && backend()?.kind === 'firebase' && (
         <p className="hint" style={{ margin: '10px 0 16px' }}>
           Firebase는 <b>저장소 CORS를 한 번 열어야</b> 백업 zip에 이미지가 담깁니다 — 안 하면 글·설정만 담깁니다.
@@ -1810,7 +1679,6 @@ function DataPane() {
         </div>
       </div>
 
-      {/* 데이터베이스 이전 (v2.0) — 새 프로젝트·다른 서비스로 통째 옮기기 */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l"><b>데이터베이스 이전</b><small>다른 프로젝트나 다른 서비스(Supabase ↔ Firebase)로 글·설정·이미지를 통째로 옮깁니다</small></div>
         <button className="btn btn-ghost" style={{ padding: '9px 20px' }}
@@ -1875,7 +1743,6 @@ function DataPane() {
         )}
       </Modal>
 
-      {/* 선택 초기화 (v1.9 사용자 확정) — 메뉴별 체크 + 사이트 설정·이미지·회원 계정 별도 선택 */}
       <div className="set-row">
         <div className="l"><b>초기화</b><small>지울 항목을 골라서 — 메뉴별 데이터 / 사이트 설정 / 이미지 / 회원 계정 (복구 불가, 백업을 먼저 내보내 두세요)</small></div>
         <button className="btn btn-ghost" style={{ padding: '9px 20px', color: 'var(--accent)' }}
@@ -1925,7 +1792,6 @@ function DataPane() {
           { label: 'CANCEL', kind: 'ghost', onClick: () => setCleanAsk(false) },
         ]} />
 
-      {/* 지울 캐릭터 이름을 그대로 보여 준다 (v2.0) — 개수만으로는 무엇이 사라지는지 알 수 없다 */}
       <ConfirmModal open={charAsk} title={`상대 캐릭터 ${orphanChars.length}명을 지울까요?`}
         body={`${orphanChars.slice(0, 12).map(c => c.name).join(', ')}${orphanChars.length > 12 ? ` 외 ${orphanChars.length - 12}명` : ''} — 어느 자관에도 등록돼 있지 않은 캐릭터입니다. 지우면 복구할 수 없습니다.`}
         onClose={() => setCharAsk(false)}
@@ -1939,12 +1805,10 @@ function DataPane() {
         onClose={() => setResetAsk(false)}
         buttons={[
           { label: '초기화', kind: 'accent', onClick: () => {
-            // 서버 모드에서는 DB에서도 지우므로 끝난 뒤에 새로고침 (v2.0)
             setResetAsk(false);
             toast('초기화하는 중…');
             void resetGroups(picked)
               .then(r => {
-                // 실패를 숨기면 "지웠다"고 나오는데 서버에는 그대로 남는다 — 건수를 그대로 알린다
                 if (r.failed.length) {
                   toast(`${r.failed.length}건을 서버에서 지우지 못했습니다 — 로그인·보안 규칙을 확인해 주세요`);
                 } else if (serverOn) {
@@ -1965,11 +1829,9 @@ function DataPane() {
   );
 }
 
-/** 멤버 선택 모달 (v2.0 사용자 요청) — 「비로그인 숨김」 메뉴를 특정 회원에게만.
- *  검색으로 걸러 체크하고, 비우면 지금까지처럼 로그인한 모든 회원. 관리자는 항상 볼 수 있어 목록에 없다 */
 function MemberPickModal({ initial, onApply, onClose, desc }: {
   initial: string[]; onApply: (ids: string[]) => void; onClose: () => void;
-  desc?: string;   // 무엇에 대한 선택인지 — 노출 제한/글쓰기 권한이 같은 모달을 쓴다 (v2.0)
+  desc?: string;
 }) {
   const pool = useMembers().filter(p => p.id !== 'admin' && p.role !== 'admin');
   const [q, setQ] = useState('');
@@ -1998,7 +1860,6 @@ function MemberPickModal({ initial, onApply, onClose, desc }: {
             </p>
           )}
         </div>
-        {/* 탈퇴 등으로 목록에 없는 선택이 남아 있으면 알려 준다 — 몰래 남아 계속 잠그는 일이 없게 */}
         {sel.some(id => !pool.some(p => p.id === id)) && (
           <p className="hint" style={{ margin: 0 }}>
             회원 목록에 없는 선택 {sel.filter(id => !pool.some(p => p.id === id)).length}건이 있습니다 — 적용하면 그대로 유지됩니다
@@ -2009,33 +1870,25 @@ function MemberPickModal({ initial, onApply, onClose, desc }: {
   );
 }
 
-/** 메뉴 관리 탭 (5.2 — 메뉴 선택제) — 노출·순서·이름 + 메뉴별 부속 설정 */
 function MenuPane() {
   const [ms, patch, msLoaded] = useMenuSettings();
-  // 글에도 적용 (v2.0 사용자 요청) — 아래 applyVis 참조
   const { user } = useAuth();
   const [visBusy, setVisBusy] = useState(false);
-  // 「주소로는 열람 허용」을 켤 때 띄우는 확인 (v2.0 사용자 요청)
   const [openAsk, setOpenAsk] = useState<(() => void) | null>(null);
   const [visAsk, setVisAsk] = useState(false);
-  // 멤버 선택 모달 (v2.0 사용자 요청) — 「비로그인 숨김」·갤러리 글쓰기를 특정 회원으로 좁힌다
   const [memAsk, setMemAsk] = useState<{ ids: string[]; apply: (ids: string[]) => void; desc?: string } | null>(null);
   const [commSet, patchComm] = useCommSettings();
-  const { boards, loaded: bLoaded, patchBoard } = useBoards();  // 추가 게시판 이름·자동 편입 동기화 + 권한
+  const { boards, loaded: bLoaded, patchBoard } = useBoards();
   const toast = useToast();
   const del = useConfirmDelete();
   const saved = ms.tree ?? defaultTree();
-  // 게시판 + 여러 개로 만든 섹션 — 메뉴가 아는 「추가 항목」 전체 (v2.0)
   const { map: secMap } = useSections();
-  const { links, setLinks } = useCustomLinks();   // 커스텀 링크 (v2.0 사용자 요청)
-  // 새 커스텀 링크 입력 폼 (v2.0 사용자 제보 — 「주소를 적으면 이름 짓기 전에 올라간다」).
-  // 예전에는 ADD가 빈 행을 즉시 등록해, 주소를 치는 순간 미배치에 미완성 링크가 나타났다
+  const { links, setLinks } = useCustomLinks();
   const [nlName, setNlName] = useState('');
   const [nlHref, setNlHref] = useState('');
   const extraAll = [...boardEntries(boards), ...sectionMenuEntries(secMap), ...linkEntries(links)];
   const defLabel = (href: string) => menuLabelFor(href, extraAll) ?? href;
 
-  // 드래프트 — 모든 편집(삭제 포함)은 SAVE를 눌러야 실제 메뉴에 반영 (v1.9 사용자 피드백)
   const [draft, setDraft] = useState<MenuGroupNode[] | null>(null);
   const [draftRemoved, setDraftRemoved] = useState<string[] | null>(null);
   const tree = draft ?? saved;
@@ -2043,22 +1896,16 @@ function MenuPane() {
   const dirty = draft !== null && (
     JSON.stringify(draft) !== JSON.stringify(saved)
     || JSON.stringify(removed) !== JSON.stringify(ms.removedBoards));
-  // 저장본이 바뀌면(정규화·다른 탭) 편집 전 상태에서만 드래프트 갱신
+
   const savedKey = JSON.stringify([saved, ms.removedBoards]);
   useEffect(() => {
     if (!msLoaded || !bLoaded) return;
     if (!dirty) { setDraft(saved); setDraftRemoved(ms.removedBoards); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [savedKey, msLoaded, bLoaded]);
 
   const setTree = (t: MenuGroupNode[]) => setDraft(t);
   const saveAll = () => { patch({ tree, removedBoards: removed }); toast('메뉴가 저장되었습니다'); };
 
-  /* 이미 올라간 글의 공개범위를 서버에 적용 (v2.0 사용자 요청).
-     화면에서 가리는 것만으로는 API를 직접 부르는 사람에게 그대로 보인다 — 서버(RLS)가
-     내주지 않게 하려면 행의 공개범위 칸 자체가 좁아야 한다.
-     컬렉션을 하나씩 훑어 **비공개 메뉴에 걸린 것만** 골라 그 칸만 갱신한다(내용·순서는 그대로).
-     새 글은 저장할 때마다 같은 기준이 자동으로 걸리므로(visFloor) 이 버튼은 **이미 있는 글**용이다. */
   const applyVis = async () => {
     const be = backend();
     if (!be) { toast('서버에 연결돼 있지 않습니다 — 브라우저 저장 모드에는 서버 권한 자체가 없습니다'); return; }
@@ -2078,7 +1925,6 @@ function MenuPane() {
   };
   const revert = () => { setDraft(saved); setDraftRemoved(ms.removedBoards); };
 
-  // 이탈 경고 — 미저장 변경이 있는데 상단바·다른 설정 탭으로 이동하려 하면 (테마와 동일 패턴)
   const dirtyRef = useRef(dirty); dirtyRef.current = dirty;
   const [leaveAsk, setLeaveAsk] = useState(false);
   const pendingClick = useRef<HTMLElement | null>(null);
@@ -2094,9 +1940,8 @@ function MenuPane() {
     document.addEventListener('click', onCapture, true);
     return () => document.removeEventListener('click', onCapture, true);
   }, []);
-  const [resetAsk, setResetAsk] = useState(false);   // 기본 구성 리셋 확인 모달
-  const [mtab, setMtab] = useState<'basic' | 'perm'>('basic');   // 기본(구성) / 권한 탭 (v1.9)
-  // 역극 비로그인 안내 문구 (v1.9 — pagetext 'rp-gate-desc')
+  const [resetAsk, setResetAsk] = useState(false);
+  const [mtab, setMtab] = useState<'basic' | 'perm'>('basic');
   const [rpGate, setRpGate] = useState('');
   useEffect(() => { setRpGate(getPageText('rp-gate-desc', '역극은 로그인한 참여자에게만 표시됩니다')); }, []);
   const leaveWith = (action: 'save' | 'discard') => {
@@ -2106,11 +1951,9 @@ function MenuPane() {
     setLeaveAsk(false);
     const el = pendingClick.current;
     pendingClick.current = null;
-    setTimeout(() => el?.click(), 30);   // 보류했던 클릭 재실행 → 원래 목적지로
+    setTimeout(() => el?.click(), 30);
   };
 
-  /* 트리 정규화(저장본 대상) — 사라진 기능(삭제된 게시판) 제거.
-     **새로 만든 것을 자동으로 넣지는 않는다** (v2.0 사용자 확정) — 미배치에 머물게 둔다 */
   useEffect(() => {
     if (!msLoaded || !bLoaded) return;
     let next: MenuGroupNode[] = saved
@@ -2119,24 +1962,18 @@ function MenuPane() {
         : { ...g, items: g.items.filter(it => menuLabelFor(it.href, extraAll) !== null) }))
       .filter((g): g is MenuGroupNode => !!g);
     if (JSON.stringify(next) !== JSON.stringify(saved)) patch({ tree: next });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msLoaded, bLoaded, boards, ms.tree]);
 
-  // 미배치 = 트리에 없는 기능 — 메뉴에 노출되지 않음 (데이터는 보존)
   const placedSet = new Set(tree.flatMap(g => (g.href ? [g.href] : g.items.map(i => i.href))));
   const unplaced = [
     ...FEATURES.filter(f => !placedSet.has(f.href)),
-    // 게시판·갤러리·다이어리 등 여러 개로 만든 것도 여기 뜬다 (v2.0 사용자 요청).
-    // 자동 배치를 없앴으므로 **만들면 여기 머문다** — 원하는 상위 메뉴에 직접 넣는다
     ...extraAll.map(b => ({ href: b.href, label: b.name })).filter(x => !placedSet.has(x.href)),
   ];
 
   const patchGroup = (id: string, p: Partial<MenuGroupNode>) =>
     setTree(tree.map(g => (g.id === id ? { ...g, ...p } : g)));
-  // 배치 해제 시 게시판이면 자동 편입 제외 목록에 (다시 배치하면 해제) — 드래프트에만
+
   const markRemoved = (hrefs: string[]) => {
-    // 추가 항목(게시판·섹션)은 빼 두면 자동 배치가 다시 넣지 않도록 기억한다 —
-    // 기억하지 않으면 빼는 순간 자동 배치가 원래 자리로 되돌려 놓는다
     const known = new Set(extraAll.map(b => b.href));
     const bs = hrefs.filter(h => known.has(h));
     if (bs.length) setDraftRemoved([...new Set([...removed, ...bs])]);
@@ -2145,7 +1982,6 @@ function MenuPane() {
     setTree(tree.filter(x => x.id !== g.id));
     markRemoved(g.href ? [g.href] : g.items.map(i => i.href));
   };
-  // 삭제는 경고 모달을 거친 뒤 드래프트에 반영 — SAVE를 눌러야 실제 메뉴에서 사라짐
   const askRemoveGroup = (g: MenuGroupNode) => del.ask(
     g.href ? `단독 메뉴 「${g.label}」를 메뉴에서 빼시겠습니까?` : `상위 메뉴 「${g.label}」를 삭제하시겠습니까?`,
     () => removeGroup(g),
@@ -2180,7 +2016,7 @@ function MenuPane() {
         { value: 'admin', label: `${label}: 관리자` },
       ]} />
   );
-  // 메뉴별 부속 설정 — 기본 탭용 (표시 방식 등)
+
   const extraFor = (href: string) => {
     switch (href) {
       case '/gallery': return (
@@ -2195,7 +2031,6 @@ function MenuPane() {
           <button className={commSet.ratio === '4:3' ? 'on' : ''} onClick={() => patchComm({ ratio: '4:3' })}>비율 4:3</button>
         </div>
       );
-      // 스케줄러 달 표기 (v1.9) — AUGUST 2026 / 2026.08
       case '/cal': return (
         <div className="mini-seg">
           <button className={(ms.calTitle ?? 'en') === 'en' ? 'on' : ''} onClick={() => patch({ calTitle: 'en' })}>AUGUST 2026</button>
@@ -2206,17 +2041,35 @@ function MenuPane() {
     }
   };
 
-  // 메뉴별 권한 부속 — 권한 탭용 (v1.9)
+  // ── [수정] 캐릭터(/chars) 및 자관(/rels) 글쓰기/편집 권한 추가 ──
   const extraPerm = (href: string) => {
-    // 역극 — 비로그인 안내 문구 (관리자는 그 화면을 볼 수 없어 여기서 편집)
+    if (href === '/chars' || href.startsWith('/chars?')) {
+      const perm = ms.charWrite ?? 'admin';
+      return (
+        <KSelect minWidth={110} value={perm} onChange={v => patch({ charWrite: v as MenuPerm })}
+          options={[
+            { value: 'member', label: '글쓰기: 가입자' },
+            { value: 'admin', label: '글쓰기: 관리자' },
+          ]} />
+      );
+    }
+    if (href === '/rels' || href.startsWith('/rels?')) {
+      const perm = ms.relWrite ?? 'admin';
+      return (
+        <KSelect minWidth={110} value={perm} onChange={v => patch({ relWrite: v as MenuPerm })}
+          options={[
+            { value: 'member', label: '글쓰기: 가입자' },
+            { value: 'admin', label: '글쓰기: 관리자' },
+          ]} />
+      );
+    }
     if (href === '/rp') {
       return (
         <KInput value={rpGate}
           onChange={e => { setRpGate(e.target.value); setPageText('rp-gate-desc', e.target.value); }}
-          placeholder="비로그인 안내 문구" style={{ width: 210, fontSize: 12 }} />
+          placeholder="비밀번호 안내 문구" style={{ width: 210, fontSize: 12 }} />
       );
     }
-    // 게시판 글쓰기·댓글 권한 (게시판별)
     if (href === '/board' || href.startsWith('/board?b=')) {
       const bid = href === '/board' ? MAIN_BOARD_ID : href.slice('/board?b='.length);
       const bd = boards.find(b => b.id === bid);
@@ -2247,10 +2100,8 @@ function MenuPane() {
         </>
       );
     }
-    // 갤러리 글쓰기 권한 (v2.0 사용자 요청) — 갤러리(섹션)마다 · 「글쓰기 멤버」로 특정 회원까지
     if (href === '/gallery' || href.startsWith('/gallery?s=')) {
       const key = href === '/gallery' ? MAIN_SEC : href.slice('/gallery?s='.length);
-      // 메뉴 주소에는 별명(slug)이 적혀 있을 수 있다 — id로 통일해 저장
       const gsec = sectionsOf(secMap, 'gallery').find(s2 => s2.id === key || s2.slug === key);
       if (!gsec) return null;
       const gw = ms.galWrite?.[gsec.id] ?? 'member';
@@ -2273,7 +2124,6 @@ function MenuPane() {
           )}
           <KSelect minWidth={110} value={gw}
             onChange={v => {
-              // 관리자 전용으로 바꾸면 멤버 선택은 함께 지운다 — 몰래 남아 있지 않게 (노출 제한과 같은 규칙)
               const next = { ...ms.galWriteMembers };
               if (v !== 'member') delete next[gsec.id];
               patch({ galWrite: { ...ms.galWrite, [gsec.id]: v as MenuPerm }, galWriteMembers: next });
@@ -2288,9 +2138,6 @@ function MenuPane() {
     return null;
   };
 
-  /* 「주소로는 열람 허용」 (v2.0 사용자 요청) — 메뉴·위젯에서는 감추되 들어오는 것만 열어 준다.
-     링크로만 돌릴 게시판을 만들려는 용도라, 켤 때 **주소를 아는 사람은 누구나 본다**는 점을
-     모달로 분명히 알린다(사용자 요청). 「전부 보임」에서는 이미 열려 있으므로 뜻이 없어 감춘다 */
   const openChk = (v: MenuVis | undefined, open: boolean | undefined, onChange: (nv: boolean) => void) => (
     (v ?? 'all') === 'all' ? null : (
       <KCheck label={<span style={{ fontSize: 11 }}>주소로는 열람 허용</span>} checked={!!open}
@@ -2298,7 +2145,6 @@ function MenuPane() {
     )
   );
 
-  // 공개범위 셀렉트 (v1.9) — 메뉴 자체 노출: 전부 / 비로그인 숨김 / 관리자만 (드래프트 — SAVE로 적용)
   const visSel = (v: MenuVis | undefined, onChange: (nv: MenuVis) => void) => (
     <KSelect minWidth={128} value={v ?? 'all'} onChange={nv => onChange(nv as MenuVis)}
       options={[
@@ -2308,8 +2154,6 @@ function MenuPane() {
       ]} />
   );
 
-  /* 멤버 선택 (v2.0 사용자 요청) — 「비로그인 숨김」일 때만 뜨는 버튼.
-     검색 모달에서 고른 회원(+관리자)에게만 보이고 들어갈 수 있다 — 비우면 로그인한 모든 회원 */
   const memberBtn = (v: MenuVis | undefined, ids: string[] | undefined, apply: (ids: string[] | undefined) => void) => (
     v !== 'member' ? null : (
       <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 10.5 }}
@@ -2318,9 +2162,9 @@ function MenuPane() {
       </button>
     )
   );
+
   return (
     <div className="set-sec">
-      {/* 제목은 다른 탭과 같은 시작 위치(상단 정렬) — 버튼 줄 높이에 밀려 내려가지 않게 */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 14 }}>
         <h3 style={{ margin: 0 }}>메뉴 관리</h3>
         {dirty && <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600, marginTop: 3 }}>저장 안 된 변경</span>}
@@ -2333,14 +2177,12 @@ function MenuPane() {
             onClick={saveAll}>SAVE</button>
         </div>
       </div>
-      {/* 기본(구성) / 권한 탭 (v1.9) — 권한 설정이 길어져 분리 */}
       <div className="mini-seg" style={{ marginBottom: 14 }}>
         <button className={mtab === 'basic' ? 'on' : ''} onClick={() => setMtab('basic')}>기본</button>
         <button className={mtab === 'perm' ? 'on' : ''} onClick={() => setMtab('perm')}>권한</button>
       </div>
 
       {mtab === 'perm' ? (
-        /* ---------- 권한 탭 — 메뉴 공개범위 + 메뉴별 권한 부속 ---------- */
         <div>
           <div className="d">
             공개범위는 메뉴 노출을 정합니다(전부 보임 / 비로그인 숨김 / 관리자만) — SAVE를 눌러야 반영 · 글쓰기·댓글 권한은 즉시 반영
@@ -2390,7 +2232,6 @@ function MenuPane() {
               ))}
             </div>
           ))}
-          {/* 글에도 적용 (v2.0 사용자 요청) — 공개범위를 서버까지 적용한다 */}
           <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
             <b style={{ fontSize: 13 }}>열람 비공개 처리</b>
             <div className="d" style={{ marginTop: 4, lineHeight: 1.7 }}>
@@ -2409,13 +2250,11 @@ function MenuPane() {
               </button>
             </div>
           </div>
-          {/* 멤버 선택 (v2.0 사용자 요청) — 검색으로 골라 그 회원(+관리자)에게만 */}
           {memAsk && (
             <MemberPickModal initial={memAsk.ids} onApply={memAsk.apply} desc={memAsk.desc}
               onClose={() => setMemAsk(null)} />
           )}
 
-          {/* 「주소로는 열람 허용」 확인 (v2.0 사용자 요청) — 켜는 순간 무엇이 열리는지 분명히 */}
           <ConfirmModal open={!!openAsk} title="주소가 있는 모두에게 공개됩니다"
             body={'메뉴에서는 계속 감춰지지만, 이 주소를 아는 사람은 로그인하지 않아도 들어와 볼 수 있습니다. 링크를 받은 사람이 다른 곳에 옮겨 적으면 그 사람들도 볼 수 있습니다. 정말 알려지면 안 되는 내용에는 쓰지 마세요.'}
             onClose={() => setOpenAsk(null)}
@@ -2432,7 +2271,6 @@ function MenuPane() {
               { label: '적용', kind: 'dark', onClick: () => { setVisAsk(false); void applyVis(); } },
             ]} />
 
-          {/* 이미지 저장 방지 (v1.9) — 영역별 우클릭·드래그 차단, 관리자 제외 · 즉시 반영 */}
           <div style={{ marginTop: 18 }}>
             <b style={{ fontSize: 13 }}>이미지 저장 방지</b>
             <div className="d" style={{ marginTop: 4 }}>체크한 영역에서 이미지 우클릭 저장·드래그 반출을 막습니다 — 관리자 계정은 제외 · 즉시 반영</div>
@@ -2475,7 +2313,6 @@ function MenuPane() {
                   onClick={() => askRemoveGroup(g)}>{g.href ? '빼기' : 'DELETE'}</button>
               </div>
             </div>
-            {/* 하위 메뉴 — 그룹 안 순서(⠿)·이름·이동·빼기 + 부속 설정 */}
             {!g.href && (
               <div style={{ padding: '8px 0 0 34px' }}>
                 <DragList items={g.items} keyOf={it => it.href}
@@ -2521,8 +2358,6 @@ function MenuPane() {
       <h3 style={{ marginTop: 26 }}>미배치 기능</h3>
       <div className="d">트리에 넣지 않은 기능 — 메뉴에 노출되지 않지만 데이터는 보존됩니다. 넣을 위치를 고르면 바로 배치</div>
       {unplaced.map(f => {
-        // 커스텀 링크는 미배치에서도 지울 수 있다 (v2.0 사용자 요청 — 「목록 자체에서 지우고 싶다」).
-        // 다른 기능(게시판·섹션 등)은 데이터가 있어 여기서 못 지운다 — 각자의 관리 화면에서
         const link = links.find(l => l.href === f.href);
         return (
           <div key={f.href} className="set-row">
@@ -2547,8 +2382,6 @@ function MenuPane() {
         <div style={{ padding: '10px 0', fontSize: 12, color: 'var(--faint)' }}>모든 기능이 메뉴에 배치되어 있습니다</div>
       )}
 
-      {/* 커스텀 링크 (v2.0 사용자 요청) — 사이트 안의 아무 페이지나 메뉴로.
-          만들면 위 미배치 목록에 나타나고, 거기서 원하는 상위 메뉴에 넣는다 */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 22 }}>
         <h3 style={{ margin: 0 }}>커스텀 링크</h3>
       </div>
@@ -2574,7 +2407,6 @@ function MenuPane() {
             onClick={() => del.ask(`커스텀 링크 「${l.name}」를 지우시겠습니까?`,
               () => {
                 setLinks(links.filter(x => x.id !== l.id));
-                // 메뉴에 배치돼 있었으면 그 자리도 함께 비운다 — 없는 주소가 남으면 눌러도 아무 일도 안 난다
                 setTree(tree.map(g => ({ ...g, items: g.items.filter(i => i.href !== l.href) })).filter(g => g.href !== l.href));
               },
               '메뉴에 배치해 두었다면 그 자리도 함께 비워집니다. 가리키던 페이지 자체는 그대로입니다.')}>DELETE</button>
@@ -2583,8 +2415,6 @@ function MenuPane() {
       {links.length === 0 && (
         <div style={{ padding: '10px 0', fontSize: 12, color: 'var(--faint)' }}>아직 없습니다 — 아래에 이름과 주소를 적고 ADD를 눌러 주세요</div>
       )}
-      {/* 새 링크는 폼을 채워 ADD를 눌러야 등록된다 (v2.0 사용자 제보) —
-          예전에는 빈 행이 즉시 등록돼, 주소를 치는 순간 이름도 없는 링크가 미배치에 나타났다 */}
       <div className="set-row" style={{ borderTop: '1px dashed var(--line)' }}>
         <div className="l" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <KInput value={nlName} placeholder="메뉴에 보일 이름" onChange={e => setNlName(e.target.value)} style={{ width: 140 }} />
@@ -2604,7 +2434,6 @@ function MenuPane() {
       )}
 
       {del.element}
-      {/* 기본 구성 리셋 확인 (v1.9) — 드래프트만 교체, SAVE로 확정 */}
       <ConfirmModal open={resetAsk} title="메뉴를 기본 구성으로 되돌리시겠습니까?"
         body="기본 제공 메뉴 구성(자놀·게시판·TRPG·커미션·기록·방명록)으로 편집 화면이 바뀝니다. SAVE를 눌러야 실제 메뉴에 반영됩니다."
         onClose={() => setResetAsk(false)}
@@ -2612,7 +2441,6 @@ function MenuPane() {
           { label: 'RESET', kind: 'dark', onClick: () => { setDraft(defaultTree()); setDraftRemoved([]); setResetAsk(false); } },
           { label: 'CANCEL', kind: 'ghost', onClick: () => setResetAsk(false) },
         ]} />
-      {/* 미저장 메뉴 변경 이탈 경고 (v1.9) */}
       <ConfirmModal open={leaveAsk} title="메뉴가 저장되지 않았습니다"
         body="이대로 이동하면 편집 중인 메뉴 변경사항이 사라집니다."
         onClose={() => { pendingClick.current = null; setLeaveAsk(false); }}
@@ -2625,16 +2453,14 @@ function MenuPane() {
   );
 }
 
-/** TRPG 탭 (4.15, v1.9) — 도토리 상태 카테고리 라벨 + 뱃지 색 + 플레이기록 표시 열 */
 function TrpgPane() {
   const [settings, patch] = useTrpgSettings();
-  const [ms, patchMenu] = useMenuSettings();   // 플레이기록 표시 열 (4.16 — 저장 위치는 메뉴 설정)
-  // 비밀번호 걸린 로그의 안내 문구 (pagetext 'trpg-lock-desc')
+  const [ms, patchMenu] = useMenuSettings();
   const [lockDesc, setLockDesc] = useState('');
   useEffect(() => { setLockDesc(getPageText('trpg-lock-desc', '비밀번호를 입력하면 열람할 수 있습니다')); }, []);
   const patchStatus = (k: DotoriStatus, p: Partial<(typeof settings.statuses)[DotoriStatus]>) =>
     patch({ statuses: { ...settings.statuses, [k]: { ...settings.statuses[k], ...p } } });
-  // 균등 칸 그리드 — 항목 폭이 라벨 길이에 안 흔들려 PC/모바일 두 줄이 세로로 정렬됨 (v1.9)
+
   const colToggle = (list: string[], k: keyof MenuSettings) => (
     <div style={{ flex: 1, display: 'grid', gridTemplateColumns: `repeat(${PLAYLOG_COLS.length}, 1fr)`, gap: 6, justifyItems: 'center' }}>
       {PLAYLOG_COLS.map(c => (
@@ -2643,9 +2469,9 @@ function TrpgPane() {
       ))}
     </div>
   );
+
   return (
     <div className="set-sec">
-      {/* 비밀번호 걸린 로그의 안내 문구 — 관리자는 그 화면을 볼 수 없어 여기서 편집 (사용자 요청) */}
       <h3>로그 열람 안내 문구</h3>
       <div className="d">비밀번호를 건 로그에 들어갔을 때 보이는 문구입니다 — 관리자에게는 그 화면이 뜨지 않아 여기서 고칩니다</div>
       <div className="set-row" style={{ alignItems: 'center' }}>
@@ -2678,11 +2504,9 @@ function TrpgPane() {
         );
       })}
 
-      {/* 플레이기록 표시 열 — PC/모바일 각각 (4.16 v1.8 · v1.9에서 TRPG 탭 하단 배치) */}
       <hr style={{ margin: '24px 0', border: 'none', borderTop: '1.5px solid var(--line)' }} />
       <h3>플레이기록 표시 열</h3>
       <div className="d">PC와 모바일에서 보여줄 열을 각각 선택 (기본: PC 전체 7열 · 모바일 Date/Scenario/Role/Playtime)</div>
-      {/* 라벨 폭 고정 — PC/모바일 폭 차이로 두 줄 체크박스 시작점이 어긋나던 것 정렬 (v1.9) */}
       <div className="set-row" style={{ flexWrap: 'wrap' }}>
         <div className="l" style={{ width: 64, flexShrink: 0 }}><b>PC</b></div>
         {colToggle(ms.playlogPc, 'playlogPc')}
@@ -2695,7 +2519,6 @@ function TrpgPane() {
   );
 }
 
-/** 메모장 탭 (4.6) — 작성 권한 + 작성자 표시 */
 function MemoPane() {
   const [settings, patch] = useMemoSettings();
   return (
@@ -2714,13 +2537,10 @@ function MemoPane() {
   );
 }
 
-/** 감상타래 탭 (4.17) — 분류 리스트 관리 + 기본 보기 */
 function ThreadPane() {
   const [settings, patch] = useThreadSettings();
   const [works] = useLocalList<ThreadWork>('ohome.threads.v1', THREAD_SEED);
   const del = useConfirmDelete();
-  /* 분류는 감상타래마다 따로 (v2.0 사용자 요청) — 여러 개로 만들었으면 어느 것의 분류를
-     고칠지 먼저 고른다. 하나뿐이면 고를 것이 없으니 선택 줄을 아예 두지 않는다. */
   const { list } = useSections();
   const secs = list('threads');
   const [secId, setSecId] = useState(MAIN_SEC);
@@ -2729,6 +2549,7 @@ function ThreadPane() {
   const setCats = (next: ThreadCat[]) => patch(threadCatsPatch(settings, cur, next));
   const patchCat = (id: string, p: Partial<ThreadCat>) =>
     setCats(cats.map(c => (c.id === id ? { ...c, ...p } : c)));
+
   return (
     <div className="set-sec">
       <h3>기본 보기</h3>
@@ -2792,22 +2613,20 @@ function ThreadPane() {
   );
 }
 
-/** 커미션 탭 (4.18) — 뱃지 모양·커미션/신청자 뱃지 스타일·전체 슬롯·신청자 리스트 공개범위·썸네일 비율 */
 function CommBadgeRows({ list, shape, onChange, fixedIds }: {
   list: CommBadge[]; shape: 'round' | 'pill';
   onChange: (next: CommBadge[]) => void;
-  fixedIds: string[];                      // 기본 제공 뱃지 — 삭제 불가
+  fixedIds: string[];
 }) {
   const del = useConfirmDelete();
   const patch = (id: string, p: Partial<CommBadge>) =>
     onChange(list.map(b => (b.id === id ? { ...b, ...p } : b)));
+
   return (
     <>
       {list.map(b => (
         <div key={b.id} className="set-row" style={{ alignItems: 'center' }}>
-          {/* 왼쪽: 뱃지 미리보기 하나만 (4.18 — 라벨 중복 표기 없음) */}
           <div className="l"><span style={badgeStyle(b, shape)}>{b.label || '뱃지'}</span></div>
-          {/* 오른쪽 묶음: 글씨 인풋(맨 앞·오른쪽 정렬) + 배경/테두리/글씨색 */}
           <div className="cp-group" style={{ justifyContent: 'flex-end' }}>
             <KInput value={b.label} onChange={e => patch(b.id, { label: e.target.value })}
               style={{ width: 90, textAlign: 'right' }} />
@@ -2906,7 +2725,6 @@ function CommPane() {
   );
 }
 
-/** BGM 트랙 한 줄 — 인라인 수정(제목/설명/URL) + 삭제 확인 */
 function BgmTrackRow({ t, onPatch, onDelete }: {
   t: BgmTrack; onPatch: (p: Partial<BgmTrack>) => void; onDelete: () => void;
 }) {
@@ -2956,7 +2774,6 @@ function BgmTrackRow({ t, onPatch, onDelete }: {
   );
 }
 
-/** BGM 탭 (5.2 v1.9) — 곡 목록 등록(미니 플레이어 리스트에 노출) + 재생 설정 */
 function BgmPane() {
   const { state, setTracks, addTrack, removeTrack, setSettings } = useBgm();
   const toast = useToast();
@@ -3034,7 +2851,6 @@ function BgmPane() {
   );
 }
 
-/** 폰트 목록 한 줄 — CSS URL 표시 · 수정(이름/family/URL, 업로드 폰트는 이름/한글 페어) · 삭제 */
 function FontRow({ f }: { f: FontDef }) {
   const { fonts, familyOf, updateFont, removeFont, resetFont, setFontPair } = useFonts();
   const del = useConfirmDelete();
@@ -3050,7 +2866,6 @@ function FontRow({ f }: { f: FontDef }) {
         <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', alignItems: 'center' }}>
           <KInput placeholder="표시 이름" value={name} onChange={e => setName(e.target.value)} style={{ maxWidth: 160 }} />
           {f.fileId ? (
-            /* 업로드 폰트 — family는 자동, 한글 페어만 지정 (v1.9) */
             <>
               <span className="cp-lb">한글 페어</span>
               <KSelect minWidth={150} value={f.pairId ?? ''}
@@ -3061,7 +2876,6 @@ function FontRow({ f }: { f: FontDef }) {
           ) : (
             <>
               <KInput placeholder="font-family 값" value={family} onChange={e => setFamily(e.target.value)} style={{ flex: 1, minWidth: 160 }} />
-              {/* 웹폰트도 한글 페어 지정 가능 (v1.9) */}
               <span className="cp-lb">한글 페어</span>
               <KSelect minWidth={140} value={f.pairId ?? ''}
                 onChange={v => setFontPair(f.id, v || undefined)}
@@ -3077,8 +2891,6 @@ function FontRow({ f }: { f: FontDef }) {
               if (updateFont(f.id, { name, family: f.fileId ? f.family : family, cssUrl: f.fileId ? '' : cssUrl })) { setEditing(false); toast('폰트가 수정되었습니다'); }
               else toast('이름과 font-family 값을 입력해 주세요');
             }}>SAVE</button>
-          {/* 내장 폰트를 처음 상태로 (v2.0 사용자 발견) — 이름·family·한글 페어를 한꺼번에 되돌린다.
-              잘못 들어간 값(엉뚱한 family, 지워진 폰트를 가리키는 페어)을 풀 방법이 없었다 */}
           {f.builtin && (
             <button className="btn btn-ghost" style={{ whiteSpace: 'nowrap' }}
               onClick={() => {
@@ -3097,8 +2909,6 @@ function FontRow({ f }: { f: FontDef }) {
   return (
     <div className="set-row">
       <div className="l" style={{ minWidth: 0 }}>
-        {/* 미리보기는 페어 반영 스택 — 영문 폰트+한글 페어면 한글이 페어 폰트로 보임 (v1.9) */}
-        {/* familyOf가 페어까지 합쳐 주고 var(--serif) 같은 별칭도 원본 스택으로 풀어 준다 (v2.0) */}
         <b style={{ fontFamily: familyOf(f.id), fontSize: 15 }}>{f.name} — 가나다 ABC 123</b>
         <small style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {f.fileId
@@ -3114,7 +2924,6 @@ function FontRow({ f }: { f: FontDef }) {
             onClick={() => del.ask(`폰트 「${f.name}」를 삭제하시겠습니까?`, () => removeFont(f.id),
                 f.builtin
                   ? '기본 폰트는 목록에서만 빠집니다 — 아래 [복원] 버튼으로 되살릴 수 있고, 이 폰트를 쓰던 항목 표시는 그대로입니다.'
-                  // 직접 등록한 폰트는 정의째 사라지므로 가리키던 자리도 함께 정리된다 (v2.0)
                   : '직접 등록한 폰트는 복구할 수 없습니다. 이 폰트를 쓰도록 지정해 둔 자리(역할 폰트·한글 페어)는 기본값으로 되돌아갑니다.')}>DELETE</button>
         )}
       </div>
@@ -3123,18 +2932,16 @@ function FontRow({ f }: { f: FontDef }) {
   );
 }
 
-/** 폰트 탭 (5.1) — 내장 폰트도 수정·삭제 가능 · 웹폰트 URL 등록. 파일 업로드·페어링은 후속 */
 function FontPane() {
   const { fonts, hiddenCount, addFont, addFontFile, restoreBuiltins } = useFonts();
   const toast = useToast();
   const [name, setName] = useState('');
   const [family, setFamily] = useState('');
   const [cssUrl, setCssUrl] = useState('');
-  // 웹폰트 추가의 한글 페어 (v1.9) — 체크하면 지정 가능
   const [webPairOn, setWebPairOn] = useState(false);
   const [webPair, setWebPair] = useState('');
-  // 폰트 파일 업로드 (v1.9) — 표시 이름은 파일명 그대로 (EDIT에서 수정 가능, 사용자 확정)
   const [upPair, setUpPair] = useState('');
+
   const uploadFontFile = async (f: File | undefined) => {
     if (!f) return;
     const name = f.name.replace(/\.(woff2?|ttf|otf)$/i, '');
@@ -3174,7 +2981,6 @@ function FontPane() {
               } else toast('이름과 font-family 값을 입력해 주세요');
             }}>＋ ADD</button>
         </div>
-        {/* 영문·일어 등 한글 미지원 웹폰트 — 체크하면 한글 페어 지정 (v1.9 사용자 요청) */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <KCheck label="한글 페어 지정" checked={webPairOn} onChange={setWebPairOn} />
           {webPairOn && (
@@ -3184,7 +2990,6 @@ function FontPane() {
         </div>
       </div>
 
-      {/* 폰트 파일 업로드 (v1.9) — woff2·woff·ttf·otf + 영문 폰트의 한글 페어링 */}
       <div style={{ display: 'grid', gap: 8, marginTop: 16 }}>
         <label className="k-label" style={{ margin: 0 }}>폰트 파일 업로드 — woff2·woff·ttf·otf</label>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -3209,18 +3014,18 @@ function SettingsInner() {
   const router = useRouter();
   const params = useSearchParams();
   const [tab, setTabState] = useState<(typeof CATEGORIES)[number]>('디자인');
-  // 탭별 주소 (v1.9 사용자 요청) — /settings?tab=… : 뒤로가기로 이전 탭 복귀, 회원 상세에서 돌아오기 등
   const urlTab = params.get('tab');
+
   useEffect(() => {
     if (urlTab && (CATEGORIES as readonly string[]).includes(urlTab)) setTabState(urlTab as (typeof CATEGORIES)[number]);
     else if (!urlTab) setTabState('디자인');
   }, [urlTab]);
+
   const setTab = (t: (typeof CATEGORIES)[number]) => {
     setTabState(t);
     router.push(`/settings?tab=${encodeURIComponent(t)}`);
   };
 
-  // 모바일에서는 환경설정 미제공 (v1.9 사용자 확정 — 수정할 정보량이 모바일에 맞지 않음)
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia('(max-width:620px)');
@@ -3230,11 +3035,6 @@ function SettingsInner() {
     return () => mq.removeEventListener('change', f);
   }, []);
 
-  /* 미리보기는 이 페이지 안에서만 — SAVE 없이 벗어나면 저장본으로 원복 (v1.9).
-     **색만 지키고 있었다** (v2.0 사용자 발견 — 「폰트 바꾸고 SAVE 안 했는데 화면 전환이 되고
-     적용돼 있어」). 디자인 탭의 SAVE는 색·역할 폰트·로고/탭 제목 **셋**을 함께 저장하는데,
-     이탈 경고와 원복은 색(useTheme)만 보고 있었다. 나머지 둘은 모듈·프로바이더에 사는
-     드래프트라 페이지를 떠나도 사라지지 않아, 저장한 것처럼 계속 적용된 채로 남았다. */
   const { dirty: themeDirty, discard: themeDiscard, save: themeSave } = useTheme();
   const { rolesDirty, saveRoles, discardRoles } = useFonts();
   const siteDraft = useSiteDraft();
@@ -3245,9 +3045,9 @@ function SettingsInner() {
   themeRef.current = { dirty, discard };
   useEffect(() => () => { if (themeRef.current.dirty) themeRef.current.discard(); }, []);
 
-  // 미저장 변경이 있을 때 상단바로 이동하려 하면 경고 (v1.9 — 캡처 단계에서 클릭 보류)
   const [leaveAsk, setLeaveAsk] = useState(false);
   const pendingClick = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     const onCapture = (e: MouseEvent) => {
       if (!themeRef.current.dirty) return;
@@ -3262,12 +3062,12 @@ function SettingsInner() {
     document.addEventListener('click', onCapture, true);
     return () => document.removeEventListener('click', onCapture, true);
   }, []);
+
   const leaveWith = (action: 'save' | 'discard') => {
     if (action === 'save') save(); else discard();
     setLeaveAsk(false);
     const el = pendingClick.current;
     pendingClick.current = null;
-    // dirty 해제 후 보류했던 클릭 재실행 → 원래 목적지로 이동
     setTimeout(() => el?.click(), 30);
   };
 
@@ -3296,11 +3096,9 @@ function SettingsInner() {
     <section className="page">
       <div className="page-head">
         <PageTitle>SETTINGS</PageTitle>
-        {/* 관리자 클릭 수정 가능 (v1.9 — 다른 페이지 설명과 동일) */}
         <EditableDesc k="settings-desc" def="노코드 커스터마이징 — 모든 컨트롤은 자체 UI 킷 (기본 브라우저 UI 미사용)" />
       </div>
 
-      {/* 미저장 테마 변경 이탈 경고 (v1.9) */}
       <ConfirmModal open={leaveAsk} title="테마가 저장되지 않았습니다"
         body="이대로 이동하면 미리보기 중인 변경사항이 사라지고 저장된 테마로 돌아갑니다."
         onClose={() => { pendingClick.current = null; setLeaveAsk(false); }}
@@ -3351,7 +3149,6 @@ function SettingsInner() {
           ) : (
             <div className="set-sec">
               <h3>{tab}</h3>
-              {/* (v1.9) 개발 마일스톤 문구 제거 — 배포본에는 노출하지 않음 */}
               <div className="d">설정 항목이 없습니다</div>
             </div>
           )}
@@ -3362,6 +3159,5 @@ function SettingsInner() {
 }
 
 export default function SettingsPage() {
-  // useSearchParams는 Suspense 경계 필요 (Next App Router) — 탭별 주소 (v1.9)
   return <Suspense fallback={<section className="page" />}><SettingsInner /></Suspense>;
 }
