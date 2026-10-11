@@ -2041,9 +2041,10 @@ function MenuPane() {
     }
   };
 
-  // ── [수정] 캐릭터(/chars) 및 자관(/rels) 글쓰기/편집 권한 추가 ──
+// ── [수정] 캐릭터(/chars) 및 자관(/rels) 글쓰기/편집 권한 조건 강화 ──
   const extraPerm = (href: string) => {
-    if (href === '/chars' || href.startsWith('/chars?')) {
+    // /chars 또는 /chars? 로 시작하는 모든 경로 대응
+    if (href === '/chars' || href.startsWith('/chars?') || href.startsWith('/chars/')) {
       const perm = ms.charWrite ?? 'admin';
       return (
         <KSelect minWidth={110} value={perm} onChange={v => patch({ charWrite: v as MenuPerm })}
@@ -2053,7 +2054,8 @@ function MenuPane() {
           ]} />
       );
     }
-    if (href === '/rels' || href.startsWith('/rels?')) {
+    // /rels 또는 /rels? 로 시작하는 모든 경로 대응
+    if (href === '/rels' || href.startsWith('/rels?') || href.startsWith('/rels/')) {
       const perm = ms.relWrite ?? 'admin';
       return (
         <KSelect minWidth={110} value={perm} onChange={v => patch({ relWrite: v as MenuPerm })}
@@ -2197,6 +2199,7 @@ function MenuPane() {
                 <b style={{ fontSize: 13 }}>{g.label}</b>
                 {g.href && <small style={{ color: 'var(--faint)', fontSize: 10.5 }}>{g.href}</small>}
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* 단독 메뉴이거나 상위 메뉴에 href가 있는 경우 extraPerm 실행 */}
                   {g.href && extraPerm(g.href)}
                   {openChk(g.vis, g.open, nv => patchGroup(g.id, { open: nv || undefined }))}
                   {memberBtn(g.vis, g.visMembers, ids => patchGroup(g.id, { visMembers: ids }))}
@@ -2207,11 +2210,14 @@ function MenuPane() {
                   }))}
                 </div>
               </div>
+              
+              {/* 상위 그룹 하위에 속한 캐릭터/자관 메뉴 렌더링 부분 */}
               {!g.href && g.items.map(it => (
                 <div key={it.href} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '6px 0 0 22px' }}>
                   <span style={{ fontSize: 12.5 }}>{it.label ?? defLabel(it.href)}</span>
                   <small style={{ color: 'var(--faint)', fontSize: 10.5 }}>{it.href}</small>
                   <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    {/* ★ 하위 메뉴 항목에서도 extraPerm(it.href)가 호출되어야 함 */}
                     {extraPerm(it.href)}
                     {openChk(it.vis, it.open, nv => patchGroup(g.id, {
                       items: g.items.map(x => (x.href === it.href ? { ...x, open: nv || undefined } : x)),
