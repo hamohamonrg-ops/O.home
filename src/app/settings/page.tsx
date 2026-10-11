@@ -2043,7 +2043,7 @@ function MenuPane() {
 
 // ── [수정] 캐릭터(/chars) 및 자관(/rels) 글쓰기/편집 권한 조건 강화 ──
   const extraPerm = (href: string) => {
-    // /chars 또는 /chars? 로 시작하는 모든 경로 대응
+    // /chars, /chars?s=..., /chars/ 등 캐릭터 관련 모든 경로 대응
     if (href === '/chars' || href.startsWith('/chars?') || href.startsWith('/chars/')) {
       const perm = ms.charWrite ?? 'admin';
       return (
@@ -2054,7 +2054,7 @@ function MenuPane() {
           ]} />
       );
     }
-    // /rels 또는 /rels? 로 시작하는 모든 경로 대응
+    // /rels, /rels?s=..., /rels/ 등 자관 관련 모든 경로 대응
     if (href === '/rels' || href.startsWith('/rels?') || href.startsWith('/rels/')) {
       const perm = ms.relWrite ?? 'admin';
       return (
