@@ -12,15 +12,21 @@ import { CroppedBlobImg } from '@/components/ui/CropEditor';
 import { EditableDesc, PageTitle } from '@/components/ui/PageText';
 import { useMainStore } from '@/lib/mainStore';
 import { useCardSort, mergeOrder } from '@/lib/cardSort';
+import { useMenuSettings } from '@/lib/menuStore';
 
 export default function RelsPage() {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
+  const [ms] = useMenuSettings(); // 메뉴 설정값 불러오기
   const toast = useToast();
   const { editOn } = useMainStore();
   const [rels, setRels] = useLocalList<Relation>('ohome.rels.v1', REL_SEED);
   const [chars] = useLocalList<Character>('ohome.chars.v1', CHAR_SEED);
   const [q, setQ] = useState('');
+
+  // 글쓰기 권한 계산 (SETTINGS의 relWrite가 'member'이면 로그인 유저에게도 권한 부여)
+  const perm = ms.relWrite ?? 'admin';
+  const canWrite = isAdmin || (perm === 'member' && !!user);
 
   const colorOf = (id: string) => chars.find(c => c.id === id)?.color ?? '#666';
   const visible = rels
@@ -37,7 +43,12 @@ export default function RelsPage() {
         <EditableDesc k="rels-desc" def="자관 목록 · 4:3 가로 썸네일 · 공개범위: 전체공개/멤버공개/나만보기" />
         <div className="head-actions">
           <SearchBar onSearch={setQ} />
-          {isAdmin && <button className="btn btn-dark" onClick={() => router.push('/rels/new')}>＋ ADD RELATION</button>}
+          {/* isAdmin 대신 canWrite 조건 적용 */}
+          {canWrite && (
+            <button className="btn btn-dark" onClick={() => router.push('/rels/new')}>
+              ＋ ADD RELATION
+            </button>
+          )}
         </div>
       </div>
       <div className="g3 rels-grid">
