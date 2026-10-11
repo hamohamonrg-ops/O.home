@@ -468,7 +468,7 @@ function DesignPane() {
           <span className="cp-lb" style={{ marginLeft: 'auto' }}>색</span>
           <ColorField value={state.vars.shColor ?? '#000000'} onChange={hex => setVar('shColor', hex)} />
           <div className="mini-seg" style={{ marginLeft: 10 }}>
-            {(['없음', 0], ['약하게', 30], ['보통', 50], ['강하게', 100] as const).map(([label, v]) => (
+            {([['없음', 0], ['약하게', 30], ['보통', 50], ['강하게', 100]] as const).map(([label, v]) => (
               <button key={label} className={state.vars.shadow === v ? 'on' : ''}
                 onClick={() => setVar('shadow', v)}>{label}</button>
             ))}
@@ -481,7 +481,7 @@ function DesignPane() {
         <div className="l"><b>드롭다운 그림자</b><small>하위메뉴·프로필 메뉴·셀렉트 팝업·달력 — 블록 그림자와 별개, 없음도 가능</small></div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div className="mini-seg">
-            {(['없음', 0], ['약하게', 30], ['보통', 50], ['강하게', 100] as const).map(([label, v]) => (
+            {([['없음', 0], ['약하게', 30], ['보통', 50], ['강하게', 100]] as const).map(([label, v]) => (
               <button key={label} className={(state.vars.ddShadow ?? 100) === v ? 'on' : ''}
                 onClick={() => setVar('ddShadow', v)}>{label}</button>
             ))}
@@ -2041,12 +2041,11 @@ function MenuPane() {
     }
   };
 
-  // ── [수정] 캐릭터(/chars) 및 자관(/rels) 글쓰기/편집 권한 조건 강화 ──
   const extraPerm = (href: string) => {
     if (href === '/chars' || href.startsWith('/chars?') || href.startsWith('/chars/')) {
-      const perm = ms.charWrite ?? 'admin';
+      const perm = (ms as unknown as { charWrite?: MenuPerm }).charWrite ?? 'admin';
       return (
-        <KSelect minWidth={110} value={perm} onChange={v => patch({ charWrite: v as MenuPerm })}
+        <KSelect minWidth={110} value={perm} onChange={v => patch({ charWrite: v as MenuPerm } as unknown as Partial<MenuSettings>)}
           options={[
             { value: 'member', label: '글쓰기: 가입자' },
             { value: 'admin', label: '글쓰기: 관리자' },
@@ -2054,9 +2053,9 @@ function MenuPane() {
       );
     }
     if (href === '/rels' || href.startsWith('/rels?') || href.startsWith('/rels/')) {
-      const perm = ms.relWrite ?? 'admin';
+      const perm = (ms as unknown as { relWrite?: MenuPerm }).relWrite ?? 'admin';
       return (
-        <KSelect minWidth={110} value={perm} onChange={v => patch({ relWrite: v as MenuPerm })}
+        <KSelect minWidth={110} value={perm} onChange={v => patch({ relWrite: v as MenuPerm } as unknown as Partial<MenuSettings>)}
           options={[
             { value: 'member', label: '글쓰기: 가입자' },
             { value: 'admin', label: '글쓰기: 관리자' },
