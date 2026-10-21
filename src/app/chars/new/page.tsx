@@ -3,6 +3,7 @@
 import React, { Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { useMenuSettings } from '@/lib/menuStore';
 import { useLocalList } from '@/lib/postStore';
 import { Character, CHAR_SEED } from '@/lib/charStore';
 import { useSectionParam, secStamp, secQuery , useSectionTitle } from '@/lib/sectionStore';
@@ -12,18 +13,22 @@ import { PageTitle, EditableDesc } from '@/components/ui/PageText';
 
 function CharNewInner() {
   const router = useRouter();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const [ms, , msLoaded] = useMenuSettings();
+  // 글쓰기 권한 — 목록 페이지의 ＋ 버튼과 같은 판정 (설정 > charWrite: 'member'면 로그인 회원 허용)
+  const perm = ms.charWrite ?? 'admin';
+  const canWrite = isAdmin || (perm === 'member' && !!user);
   const toast = useToast();
   const [chars, setChars, loaded] = useLocalList<Character>('ohome.chars.v1', CHAR_SEED);
   const sec = useSectionParam('chars');   // 어느 캐릭터 목록에서 눌러 왔는지 (v2.0)
   // 큰 글씨 — 추가 섹션이면 그 이름, 눌렀을 때도 그 목록으로 (v2.0 사용자 제보)
   const tt = useSectionTitle('chars', sec.id, 'ADD CHARACTER');
 
-  if (!loaded) return <section className="page" />;
-  if (!isAdmin) {
+  if (!loaded || !msLoaded) return <section className="page" />;
+  if (!canWrite) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle href={tt.href}>{tt.title}</PageTitle><p>관리자 전용</p></div>
+        <div className="page-head"><PageTitle href={tt.href}>{tt.title}</PageTitle><p>글쓰기 권한이 없습니다</p></div>
       </section>
     );
   }

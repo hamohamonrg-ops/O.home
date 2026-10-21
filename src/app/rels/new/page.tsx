@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { useMenuSettings } from '@/lib/menuStore';
 import { useLocalList, newId } from '@/lib/postStore';
 import { Character, CHAR_SEED, Relation, REL_SEED, RelMember } from '@/lib/charStore';
 import { RelForm } from '@/components/rels/RelForm';
@@ -11,16 +12,20 @@ import { PageTitle, EditableDesc } from '@/components/ui/PageText';
 
 export default function RelNewPage() {
   const router = useRouter();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const [ms, , msLoaded] = useMenuSettings();
+  // 글쓰기 권한 — 목록 페이지의 ＋ 버튼과 같은 판정 (설정 > relWrite: 'member'면 로그인 회원 허용)
+  const perm = ms.relWrite ?? 'admin';
+  const canWrite = isAdmin || (perm === 'member' && !!user);
   const toast = useToast();
   const [rels, setRels, loaded] = useLocalList<Relation>('ohome.rels.v1', REL_SEED);
   const [chars] = useLocalList<Character>('ohome.chars.v1', CHAR_SEED);
 
-  if (!loaded) return <section className="page" />;
-  if (!isAdmin) {
+  if (!loaded || !msLoaded) return <section className="page" />;
+  if (!canWrite) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>ADD RELATION</PageTitle><p>관리자 전용</p></div>
+        <div className="page-head"><PageTitle>ADD RELATION</PageTitle><p>글쓰기 권한이 없습니다</p></div>
       </section>
     );
   }
