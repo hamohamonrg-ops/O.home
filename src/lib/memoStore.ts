@@ -22,6 +22,8 @@ export const MEMO_SIZE_W: Record<StickyMemo['size'], number> = { s: 128, m: 158,
 export interface MemoSettings {
   allowMember: boolean;      // 회원 작성 허용 (끄면 관리자만)
   showAuthor: boolean;       // 포스트잇에 작성자 표시
+  charWrite?: MenuPerm;
+  relWrite?: MenuPerm;
 }
 export const DEFAULT_MEMO_SETTINGS: MemoSettings = { allowMember: true, showAuthor: true };
 
