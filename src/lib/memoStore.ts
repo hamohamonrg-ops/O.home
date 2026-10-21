@@ -24,6 +24,7 @@ export interface MemoSettings {
   showAuthor: boolean;       // 포스트잇에 작성자 표시
   charWrite?: MenuPerm;
   relWrite?: MenuPerm;
+  import { MenuPerm } from './menuStore';
 }
 export const DEFAULT_MEMO_SETTINGS: MemoSettings = { allowMember: true, showAuthor: true };
 
