@@ -7,7 +7,7 @@ import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useLocalList } from '@/lib/postStore';
-import { Character, CHAR_SEED, charGrant, charWithAu, chipBorder, Relation, REL_SEED , findByKey} from '@/lib/charStore';
+import { Character, CHAR_SEED, charGrant, isOwnerOf, charWithAu, chipBorder, Relation, REL_SEED , findByKey} from '@/lib/charStore';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { useFonts } from '@/lib/fontStore';
 import { useTheme } from '@/lib/ThemeProvider';
@@ -140,7 +140,7 @@ function CharDetailInner() {
         <div className="head-actions">
           {/* 관리자 또는 「편집까지」 권한 회원 (3차 회원-캐릭터 연결, v1.9)
               — AU 선택 상태의 EDIT은 그 AU 전용 프로필 편집으로 진입 */}
-          {(isAdmin || charGrant(ch, user?.id) === 'edit') && (
+          {(isAdmin || charGrant(ch, user?.id) === 'edit' || isOwnerOf(ch, user?.id)) && (
             <button className="btn btn-dark" onClick={() => router.push(editHref)}>EDIT</button>
           )}
           {isAdmin && <button className="btn btn-dark" onClick={() => setDelAsk(true)}>DELETE</button>}
@@ -189,7 +189,7 @@ function CharDetailInner() {
           <p style={{ fontSize: 13, color: 'var(--faint)', marginBottom: 16 }}>
             이 AU의 「{ch.name}」이 아직 등록되지 않았습니다 — 등록하면 이 캐릭터의 AU 프로필로 연동됩니다
           </p>
-          {(isAdmin || charGrant(ch, user?.id) === 'edit') && (
+          {(isAdmin || charGrant(ch, user?.id) === 'edit' || isOwnerOf(ch, user?.id)) && (
             <button className="btn btn-dark" onClick={() => router.push(editHref)}>＋ AU 캐릭터 등록</button>
           )}
         </div>

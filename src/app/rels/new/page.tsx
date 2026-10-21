@@ -48,6 +48,7 @@ export default function RelNewPage() {
             ({ charId: cid, quote: '', keywords: [], desc: '', palette: [] }));
           const rel: Relation = {
             id: v.slug ?? newId(),   // 지정한 페이지 주소 (v1.9) — 비우면 자동
+            ...(user ? { authorId: user.id } : {}),   // 등록한 회원 (본인 수정 판정)
             name: v.name, catchphrase: v.catchphrase, kind: v.kind,
             fontId: v.fontId, bodyFontId: v.bodyFontId, visibility: v.visibility,
             arts: v.arts, thumbId: v.arts[0], thumbCrop: v.thumbCrop,

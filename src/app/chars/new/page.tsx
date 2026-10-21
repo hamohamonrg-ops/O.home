@@ -44,7 +44,7 @@ function CharNewInner() {
         existingIds={chars.flatMap(c => [c.id, ...(c.slug ? [c.slug] : [])])}
         onCancel={() => router.push('/chars' + secQuery('chars', sec.id))}
         onSave={c => {
-          setChars([...chars, { ...c, ...secStamp(sec.id) }]);
+          setChars([...chars, { ...c, ...secStamp(sec.id), ...(user ? { authorId: user.id } : {}) }]);
           toast('캐릭터가 등록되었습니다');
           router.push(`/chars/${c.id}`);
         }}

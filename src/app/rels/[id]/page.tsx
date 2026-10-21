@@ -13,7 +13,7 @@ import {
   auMember, auStyle, fullShadow, hasRelGrant,
   RelAu, RelCpTag, charWithAu, charGrant,
   QaAnswerRow, QA_KEY, QA_SEED, MergedAnswer, answersFor,
-  findByKey, charPath,
+  findByKey, charPath, isOwnerOf,
 } from '@/lib/charStore';
 import { RelQuestionSet, RELQ_SEED, RELQ_KEY, CP_LABEL } from '@/lib/relqStore';
 import { putBlob } from '@/lib/blobStore';
@@ -833,8 +833,8 @@ export default function RelDetailPage() {
         </div>
       )}
 
-      {/* 관리자 액션 (좌상단) */}
-      {isAdmin && (
+      {/* 관리자 액션 (좌상단) — EDIT은 본인이 등록한 자관이면 회원에게도 (v2.0), DELETE는 관리자만 */}
+      {(isAdmin || isOwnerOf(rel, user?.id)) && (
         <div className="rel-admin-actions">
           {/* AU 선택 중이면 그 AU의 일러·캐치프레이즈를 편집 (v1.9) */}
           <button className="btn btn-dark" style={{ height: 30, padding: '0 13px', fontSize: 11 }}
@@ -844,10 +844,12 @@ export default function RelDetailPage() {
           {/* AU를 보는 중이면 지워지는 것도 그 AU다 (v2.0 사용자 발견 — 자관이 통째로 지워졌다).
               EDIT은 AU를 따라가는데 DELETE만 안 따라가서, AU 화면에서 누르면 자관 전체가 날아갔다.
               버튼 글씨에도 무엇이 지워지는지 그대로 쓴다 */}
+          {isAdmin && (
           <button className="btn btn-dark" style={{ height: 30, padding: '0 13px', fontSize: 11 }}
             onClick={() => (isBaseAu ? setDelAsk(true) : setAuDelAsk(au!.id))}>
             {isBaseAu ? 'DELETE' : `DELETE ${au!.label}`}
           </button>
+          )}
         </div>
       )}
 

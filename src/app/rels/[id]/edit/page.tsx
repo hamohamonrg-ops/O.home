@@ -5,7 +5,7 @@ import React, { Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useLocalList } from '@/lib/postStore';
-import { Character, CHAR_SEED, Relation, REL_SEED, findByKey } from '@/lib/charStore';
+import { Character, CHAR_SEED, Relation, REL_SEED, findByKey, isOwnerOf } from '@/lib/charStore';
 import { RelForm } from '@/components/rels/RelForm';
 import { useToast } from '@/components/ui/Toast';
 import { PageTitle, EditableDesc } from '@/components/ui/PageText';
@@ -13,7 +13,7 @@ import { PageTitle, EditableDesc } from '@/components/ui/PageText';
 function RelEditInner() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const toast = useToast();
   const params = useSearchParams();
   const auId = params.get('au') ?? undefined;
@@ -24,10 +24,11 @@ function RelEditInner() {
   const rel = findByKey(rels, id);
   const auObj = auId ? rel?.aus.find(a => a.id === auId && a.id !== 'base') : undefined;
   if (!loaded) return <section className="page" />;
-  if (!isAdmin || !rel) {
+  const canEdit = !!rel && (isAdmin || isOwnerOf(rel, user?.id));
+  if (!canEdit || !rel) {
     return (
       <section className="page">
-        <div className="page-head"><PageTitle>EDIT</PageTitle><p>{!rel ? '자관을 찾을 수 없습니다' : '관리자 전용'}</p></div>
+        <div className="page-head"><PageTitle>EDIT</PageTitle><p>{!rel ? '자관을 찾을 수 없습니다' : '편집 권한이 없습니다'}</p></div>
       </section>
     );
   }

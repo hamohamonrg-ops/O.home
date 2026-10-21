@@ -19,6 +19,8 @@ export interface CharTab {
 
 export interface Character {
   id: string;
+  /** 등록한 회원 (v2.0 — 회원 글쓰기 허용 시 본인 수정 판정. 없으면 관리자가 만든 것) */
+  authorId?: string;
   name: string;          // 대표 이름 (전용 폰트 적용 대상)
   sub: string;           // 한글명 · 소속 한 줄
   color: string;         // 대표 테마색 (말풍선·리스트 점)
@@ -127,6 +129,11 @@ export function hasRelGrant(
 ): boolean {
   if (!userId) return false;
   return members.some(m => !!charGrant(chars.find(c => c.id === m.charId) ?? { grants: [] } as unknown as Character, userId));
+}
+
+/** 본인이 등록한 항목인가 (v2.0 — 캐릭터·자관 공통) */
+export function isOwnerOf(item: { authorId?: string }, userId?: string): boolean {
+  return !!userId && !!item.authorId && item.authorId === userId;
 }
 
 /** 회원의 캐릭터 권한 — edit는 play를 포함 */
@@ -352,6 +359,8 @@ export interface RelAu {
 
 export interface Relation {
   id: string;
+  /** 등록한 회원 (v2.0 — 회원 글쓰기 허용 시 본인 수정 판정. 없으면 관리자가 만든 것) */
+  authorId?: string;
   /** 페이지 주소 별명 (v2.0 사용자 요청) — /rels/{별명}. 나중에 수정 화면에서 바꿀 수 있다.
    *  참조(AU 프로필 키·로그 연동 등)는 언제나 id로 저장되므로 바꿔도 끊어지지 않는다. */
   slug?: string;
