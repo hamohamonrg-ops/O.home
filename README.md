@@ -177,3 +177,4 @@ firebase/*.rules        Firestore·Storage 보안 규칙
 
 - **기본 브라우저 UI 금지** — 모든 폼 컨트롤은 `components/ui` 킷 사용
 - **기획서와 달라지거나 추가되는 사항은 기획서 상단 「구현 반영 로그」에 기록**
+- 
